@@ -5,14 +5,11 @@
 <?php
 session_start();
 
-// データベース接続
-$db_host = 'localhost';
-$db_name = 'monshin';
-$db_user = 'root';
-$db_pass = '';
+// 設定ファイルを読み込む
+require_once 'config.php';
 
 try {
-    $pdo = new PDO("mysql:host=$db_host;dbname=$db_name;charset=utf8mb4", $db_user, $db_pass);
+    $pdo = new PDO("mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4", DB_USER, DB_PASS);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch(PDOException $e) {
     die("データベース接続エラー: " . $e->getMessage());
@@ -25,11 +22,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
     $id = $_POST['id'] ?? '';
     $password = $_POST['password'] ?? '';
     
-    $stmt = $pdo->prepare("SELECT * FROM users WHERE id = :id AND password = :password");
-    $stmt->execute([':id' => $id, ':password' => $password]);
+    $stmt = $pdo->prepare("SELECT * FROM users WHERE id = :id");
+    $stmt->execute([':id' => $id]);
     $user = $stmt->fetch(PDO::FETCH_ASSOC);
     
-    if ($user) {
+    if ($user && password_verify($password, $user['password'])) {
         $_SESSION['admin_logged_in'] = true;
         $_SESSION['admin_username'] = $user['username'];
         header('Location: admin_dashboard.php');

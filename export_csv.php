@@ -11,14 +11,11 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
     exit;
 }
 
-// データベース接続
-$db_host = 'localhost';
-$db_name = 'monshin';
-$db_user = 'root';
-$db_pass = '';
+// 設定ファイルを読み込む
+require_once 'config.php';
 
 try {
-    $pdo = new PDO("mysql:host=$db_host;dbname=$db_name;charset=utf8mb4", $db_user, $db_pass);
+    $pdo = new PDO("mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4", DB_USER, DB_PASS);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch(PDOException $e) {
     die("データベース接続エラー: " . $e->getMessage());
