@@ -7,11 +7,14 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
     exit;
 }
 
-// 設定ファイルを読み込む
-require_once 'config.php';
+// データベース接続
+$db_host = 'localhost';
+$db_name = 'monshin';
+$db_user = 'root';
+$db_pass = '';
 
 try {
-    $pdo = new PDO("mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4", DB_USER, DB_PASS);
+    $pdo = new PDO("mysql:host=$db_host;dbname=$db_name;charset=utf8mb4", $db_user, $db_pass);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch(PDOException $e) {
     die("データベース接続エラー: " . $e->getMessage());
@@ -19,7 +22,7 @@ try {
 
 // 統計情報取得
 $total_responses = $pdo->query("SELECT COUNT(*) FROM questionnaire_responses")->fetchColumn();
-$today_responses = $pdo->query("SELECT COUNT(*) FROM questionnaire_responses WHERE submitted_at >= CURDATE() AND submitted_at < CURDATE() + INTERVAL 1 DAY")->fetchColumn();
+$today_responses = $pdo->query("SELECT COUNT(*) FROM questionnaire_responses WHERE DATE(submitted_at) = CURDATE()")->fetchColumn();
 
 // 全回答データ取得（response_idの昇順に変更）
 $stmt = $pdo->query("SELECT * FROM questionnaire_responses ORDER BY response_id ASC");
