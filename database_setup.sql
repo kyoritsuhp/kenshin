@@ -1,21 +1,13 @@
 -- ファイル名称: database_create.sql
 -- 生成日時: 2025-10-02
 
--- データベース作成
-CREATE DATABASE IF NOT EXISTS monshin DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
-USE monshin;
-
 -- usersテーブル作成（管理者用）
 CREATE TABLE IF NOT EXISTS users (
     id VARCHAR(50) PRIMARY KEY,
-    password VARCHAR(50) NOT NULL,
+    password VARCHAR(255) NOT NULL,
     username VARCHAR(100) NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- 管理者アカウント挿入
-INSERT INTO users (id, password, username) VALUES ('admin', 'admin', '管理者');
 
 -- 問診票回答テーブル作成
 CREATE TABLE IF NOT EXISTS questionnaire_responses (
