@@ -5,9 +5,6 @@
 <?php
 session_start();
 
-<?php
-session_start();
-
 // 設定ファイルを読み込む
 require_once 'config.php';
 
