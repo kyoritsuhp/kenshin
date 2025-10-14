@@ -3,6 +3,9 @@
 生成日時: 2025-10-02
 */
 
+/* ===============================================
+   共通スタイル (全てのページに適用)
+   =============================================== */
 * {
     margin: 0;
     padding: 0;
@@ -31,30 +34,26 @@ body {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     padding: 15px 20px;
-    /* text-align: center; ← flexboxで中央揃えするため不要になります */
-    display: flex; /* アイコンとテキストを横並びに */
-    align-items: center; /* 上下中央揃え */
-    justify-content: center; /* 左右中央揃え */
-    gap: 15px; /* アイコンとテキストの間隔 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
 }
 
-/* ▼▼▼ 以下をファイル末尾などに追加 ▼▼▼ */
 .header-icon {
-    width: 40px; /* アイコンの横幅を指定 */
-    height: auto; /* 高さは自動調整 */
+    width: 40px;
+    height: auto;
 }
 
 .header-text {
-    text-align: left; /* テキストの開始位置を左揃えに */
+    text-align: left;
 }
-/* ▲▲▲ ここまで追加 ▲▲▲ */
-
 
 .header h1 {
     font-size: 18px;
     margin-bottom: 5px;
     font-weight: 600;
-    margin: 0; /* 上下の余白をリセット */
+    margin: 0;
 }
 
 .subtitle {
@@ -81,6 +80,77 @@ body {
     color: #721c24;
 }
 
+.button-group {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 2px solid #dee2e6;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+}
+
+.btn-danger {
+    background: #dc3545;
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #c82333;
+}
+
+.admin-link {
+    text-align: center;
+    padding: 15px;
+    background: #f8f9fa;
+    border-top: 1px solid #dee2e6;
+}
+
+.admin-link a {
+    color: #667eea;
+    text-decoration: none;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.admin-link a:hover {
+    text-decoration: underline;
+}
+
+/* ===============================================
+   index.php (問診票フォーム) のスタイル
+   =============================================== */
 .questionnaire-form {
     padding: 15px 20px;
 }
@@ -114,21 +184,7 @@ body {
     font-size: 11px;
 }
 
-.form-group input[type="text"] {
-    width: 100%;
-    padding: 6px 8px;
-    border: 1px solid #ced4da;
-    border-radius: 4px;
-    font-size: 11px;
-    transition: border-color 0.2s;
-}
-
-.form-group input[type="text"]:focus {
-    outline: none;
-    border-color: #667eea;
-    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
-}
-
+.form-group input[type="text"],
 .form-group input[type="password"] {
     width: 100%;
     padding: 6px 8px;
@@ -138,6 +194,7 @@ body {
     transition: border-color 0.2s;
 }
 
+.form-group input[type="text"]:focus,
 .form-group input[type="password"]:focus {
     outline: none;
     border-color: #667eea;
@@ -207,202 +264,13 @@ body {
     cursor: pointer;
 }
 
-.radio-group label input[type="radio"]:checked + * {
-    color: #667eea;
-}
-
 .radio-group label:has(input[type="radio"]:checked) {
     background: #667eea;
     color: white;
     border-color: #667eea;
 }
 
-.button-group {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-    margin-top: 20px;
-    padding-top: 15px;
-    border-top: 2px solid #dee2e6;
-}
-
-.btn {
-    padding: 10px 30px;
-    border: none;
-    border-radius: 5px;
-    font-size: 12px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s;
-}
-
-.btn-primary {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-}
-
-.btn-primary:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-}
-
-.btn-secondary {
-    background: #6c757d;
-    color: white;
-}
-
-.btn-secondary:hover {
-    background: #5a6268;
-}
-
-.admin-link {
-    text-align: center;
-    padding: 15px;
-    background: #f8f9fa;
-    border-top: 1px solid #dee2e6;
-}
-
-.admin-link a {
-    color: #667eea;
-    text-decoration: none;
-    font-size: 11px;
-    font-weight: 600;
-}
-
-.admin-link a:hover {
-    text-decoration: underline;
-}
-
-/* 管理画面用スタイル */
-.login-container {
-    max-width: 400px;
-    margin: 50px auto;
-    padding: 30px;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-}
-
-.login-container h1 {
-    font-size: 14px;
-    margin-bottom: 20px;
-    text-align: center;
-    color: #667eea;
-}
-
-.stats-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 15px;
-    margin-bottom: 20px;
-}
-
-.stat-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-    padding: 15px;
-    border-radius: 6px;
-    text-align: center;
-}
-
-.stat-card h3 {
-    font-size: 11px;
-    margin-bottom: 8px;
-    opacity: 0.9;
-}
-
-.stat-card .number {
-    font-size: 24px;
-    font-weight: bold;
-}
-
-.action-buttons {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-}
-
-.btn-small {
-    padding: 6px 12px;
-    font-size: 11px;
-}
-
-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 10px;
-    background: white;
-}
-
-table th {
-    background: #667eea;
-    color: white;
-    padding: 8px 5px;
-    text-align: left;
-    font-weight: 600;
-    font-size: 10px;
-    position: sticky;
-    top: 0;
-}
-
-table td {
-    padding: 6px 5px;
-    border-bottom: 1px solid #dee2e6;
-}
-
-table tr:hover {
-    background: #f8f9fa;
-}
-
-.table-container {
-    overflow-x: auto;
-    max-height: 500px;
-    border: 1px solid #dee2e6;
-    border-radius: 6px;
-}
-
-.logout-btn {
-    position: absolute;
-    top: 15px;
-    right: 20px;
-    padding: 6px 12px;
-    background: rgba(255,255,255,0.2);
-    color: white;
-    border: 1px solid white;
-    border-radius: 4px;
-    font-size: 10px;
-    cursor: pointer;
-    text-decoration: none;
-}
-
-.logout-btn:hover {
-    background: rgba(255,255,255,0.3);
-}
-
-@media print {
-    .action-buttons, .logout-btn, .admin-link {
-        display: none;
-    }
-}
-
-.dashboard-page .container {
-    max-width: 1200px;
-}
-
-/* ▼▼▼ 追加したスタイル ▼▼▼ */
-/* admin.php ログインコンテナ中央配置用スタイル */
-.login-page-body {
-    display: flex;
-    justify-content: center; /* 水平方向の中央揃え */
-    align-items: center;    /* 垂直方向の中央揃え */
-}
-
-.login-page-body .login-container {
-    margin: 0; /* flexboxで中央揃えするため、既存のmarginをリセット */
-}
-
-/* ▼▼▼ 確認モーダル用スタイル（ここから追記） ▼▼▼ */
+/* 確認モーダル用スタイル */
 .modal-overlay {
     position: fixed;
     top: 0;
@@ -410,7 +278,7 @@ table tr:hover {
     width: 100%;
     height: 100%;
     background: rgba(0, 0, 0, 0.6);
-    display: none; /* 初期状態は非表示 */
+    display: none;
     justify-content: center;
     align-items: center;
     z-index: 1000;
@@ -455,7 +323,7 @@ table tr:hover {
 }
 
 .modal-body {
-    overflow-y: auto; /* 内容が多い場合にスクロール */
+    overflow-y: auto;
 }
 
 #confirmationDetails ul {
@@ -490,4 +358,107 @@ table tr:hover {
     justify-content: flex-end;
     gap: 10px;
 }
-/* ▲▲▲ 確認モーダル用スタイル（ここまで追記） ▲▲▲ */
+
+.modal-footer form {
+    margin-bottom: 0;
+}
+
+/* ===============================================
+   admin.php (管理者ログイン画面) のスタイル
+   =============================================== */
+.login-page-body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.login-page-body .login-container {
+    margin: 0;
+}
+
+.login-container {
+    max-width: 400px;
+    margin: 50px auto;
+    padding: 30px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+}
+
+.login-container h1 {
+    font-size: 14px;
+    margin-bottom: 20px;
+    text-align: center;
+    color: #667eea;
+}
+
+/* ===============================================
+   admin_dashboard.php & admin_index.php (管理者ページ) のスタイル
+   =============================================== */
+.dashboard-page .container {
+    max-width: 1200px;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.btn-small {
+    padding: 6px 12px;
+    font-size: 11px;
+}
+
+.table-container {
+    overflow-x: auto;
+    max-height: 500px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10px;
+    background: white;
+}
+
+table th {
+    background: #667eea;
+    color: white;
+    padding: 8px 5px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 10px;
+    position: sticky;
+    top: 0;
+}
+
+table td {
+    padding: 6px 5px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+table tr:hover {
+    background: #f8f9fa;
+}
+
+.logout-btn {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    padding: 6px 12px;
+    background: rgba(255,255,255,0.2);
+    color: white;
+    border: 1px solid white;
+    border-radius: 4px;
+    font-size: 10px;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.logout-btn:hover {
+    background: rgba(255,255,255,0.3);
+}
