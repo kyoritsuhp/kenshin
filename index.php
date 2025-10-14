@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $staff_id = trim($_POST['staff_id'] ?? '');
     $staff_name = trim($_POST['staff_name'] ?? '');
     $department = trim($_POST['department'] ?? '');
-    
+
     if (empty($staff_id)) {
         $error = '職員IDを入力してください。';
     } else {
@@ -47,7 +47,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 :q4, :q5, :q6, :q7, :q8, :q9, :q10, :q11,
                 :q12, :q13, :q14, :q15, :q16, :q17, :q18, :q19, :q20, :q21, :q22
             )";
-            
+
             $stmt = $pdo->prepare($sql);
             $stmt->execute([
                 ':staff_id' => $staff_id,
@@ -80,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':q22' => $_POST['q22'] ?? null,
             ]);
             // ▲▲▲ 修正箇所 ▲▲▲
-            
+
             $message = '問診票の送信が完了しました。ご協力ありがとうございました。';
         } catch(PDOException $e) {
             $error = '送信中にエラーが発生しました: ' . $e->getMessage();
@@ -99,8 +99,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
     <div class="container">
         <header class="header">
-            <h1>職員健康診断 問診票</h1>
-            <p class="subtitle">標準的な質問票</p>
+            <img src="images/monshin_13458.png" alt="問診票アイコン" class="header-icon">
+            <div class="header-text">
+                <h1>職員健康診断 問診票</h1>
+                <p class="subtitle">標準的な質問票</p>
+            </div>
         </header>
 
         <?php if ($message): ?>
@@ -330,10 +333,28 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
 
             <div class="button-group">
-                <button type="submit" class="btn btn-primary">送信する</button>
+                <button type="button" id="showConfirmationBtn" class="btn btn-primary">送信する</button>
                 <button type="reset" class="btn btn-secondary">リセット</button>
             </div>
-        </form>
+
+
+            <div id="confirmationModal" class="modal-overlay" style="display: none;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h2>入力内容の確認</h2>
+                        <span class="modal-close-btn">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        <div id="confirmationDetails">
+                            </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary modal-cancel-btn">修正する</button>
+                        <button type="submit" class="btn btn-primary">送信</button>
+                    </div>
+                </div>
+            </div>
+            </form>
 
         <div class="admin-link">
             <a href="admin.php">管理者ログイン</a>
@@ -341,12 +362,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <script>
-        // フォーム送信前の確認
-        document.getElementById('questionnaireForm').addEventListener('submit', function(e) {
-            if (!confirm('問診票を送信してもよろしいですか？')) {
-                e.preventDefault();
-            }
-        });
+        // フォーム送信前の確認（古いコードは削除）
+        // document.getElementById('questionnaireForm').addEventListener('submit', function(e) { ... });
 
         /**
          * ラジオボタンの選択に応じて特定の要素の表示/非表示を切り替える関数
@@ -375,6 +392,106 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         setupDynamicForm('q2', 'q2_medicine_name_group');
         setupDynamicForm('q3', 'q3_medicine_name_group');
 
+        // ▼▼▼ ここから確認モーダル用のスクリプトを追加 ▼▼▼
+        document.addEventListener('DOMContentLoaded', function() {
+            const form = document.getElementById('questionnaireForm');
+            const modal = document.getElementById('confirmationModal');
+            const showBtn = document.getElementById('showConfirmationBtn');
+            const closeBtn = document.querySelector('.modal-close-btn');
+            const cancelBtn = document.querySelector('.modal-cancel-btn');
+            const confirmationDetails = document.getElementById('confirmationDetails');
+
+            // 質問の選択肢の値を表示用のテキストに変換するための対応表
+            const valueMappings = {
+                q1: { '1': 'はい', '2': 'いいえ' },
+                q2: { '1': 'はい', '2': 'いいえ' },
+                q3: { '1': 'はい', '2': 'いいえ' },
+                q4: { '1': 'はい', '2': 'いいえ' },
+                q5: { '1': 'はい', '2': 'いいえ' },
+                q6: { '1': 'はい', '2': 'いいえ' },
+                q7: { '1': 'はい', '2': 'いいえ' },
+                q8: { '1': 'はい', '2': 'いいえ' },
+                q9: { '1': 'はい', '2': 'いいえ' },
+                q10: { '1': 'はい', '2': 'いいえ' },
+                q11: { '1': 'はい', '2': 'いいえ' },
+                q12: { '1': 'はい', '2': 'いいえ' },
+                q13: { '1': 'はい', '2': 'いいえ' },
+                q14: { '1': '速い', '2': 'ふつう', '3': '遅い' },
+                q15: { '1': 'はい', '2': 'いいえ' },
+                q16: { '1': 'はい', '2': 'いいえ' },
+                q17: { '1': 'はい', '2': 'いいえ' },
+                q18: { '1': '毎日', '2': '時々', '3': 'ほとんど飲まない（飲めない）' },
+                q19: { '1': '1合未満', '2': '1~2合未満', '3': '2~3合未満', '4': '3合以上' },
+                q20: { '1': 'はい', '2': 'いいえ' },
+                q21: { '1': '① 改善するつもりはない', '2': '② 改善するつもりである（概ね6か月以内）', '3': '③ 近いうちに（概ね1か月以内）改善するつもりであり、少しずつ始めている', '4': '④ 既に改善に取り組んでいる（6か月未満）', '5': '⑤ 既に改善に取り組んでいる（6か月以上）' },
+                q22: { '1': 'はい', '2': 'いいえ' }
+            };
+
+            // ラジオボタンの選択値を取得してテキストに変換する関数
+            function getRadioValueText(name) {
+                const checkedRadio = form.querySelector(`input[name="${name}"]:checked`);
+                if (!checkedRadio) return '<span style="color: red;">未選択</span>';
+                return valueMappings[name][checkedRadio.value] || '不明';
+            }
+
+            // テキスト入力の値を取得する関数
+            function getInputValue(id) {
+                const element = document.getElementById(id);
+                const value = element ? element.value.trim() : '';
+                return value ? value : '未入力';
+            }
+
+            // 「送信する」ボタンがクリックされた時の処理
+            showBtn.addEventListener('click', function() {
+                // HTML5のフォームバリデーションを実行
+                if (!form.checkValidity()) {
+                    // バリデーションエラーがあれば、ブラウザ標準のエラーメッセージを表示
+                    form.reportValidity();
+                    return;
+                }
+
+                let detailsHtml = '<ul>';
+                detailsHtml += `<li><strong>職員ID:</strong> ${getInputValue('staff_id')}</li>`;
+                detailsHtml += `<li><strong>氏名:</strong> ${getInputValue('staff_name')}</li>`;
+                detailsHtml += `<li><strong>所属部署:</strong> ${getInputValue('department')}</li>`;
+
+                // 全ての質問項目をループして内容を生成
+                document.querySelectorAll('.question').forEach(q => {
+                    const label = q.querySelector('label').childNodes[0].textContent.trim();
+                    const radioName = q.querySelector('input[type="radio"]')?.name;
+                    if (radioName) {
+                        let answerText = getRadioValueText(radioName);
+                        // 薬名のテキスト入力がある場合、その値も追加
+                        const medicineInput = q.querySelector('input[type="text"]');
+                        if (medicineInput && medicineInput.value.trim()) {
+                            answerText += ` (薬名: ${medicineInput.value.trim()})`;
+                        }
+                        detailsHtml += `<li><strong>${label}</strong> ${answerText}</li>`;
+                    }
+                });
+
+                detailsHtml += '</ul>';
+                confirmationDetails.innerHTML = detailsHtml;
+                modal.style.display = 'flex'; // モーダルを表示
+            });
+
+            // モーダルを閉じる関数
+            function closeModal() {
+                modal.style.display = 'none';
+            }
+
+            // 閉じるボタンとキャンセルボタンにイベントを設定
+            closeBtn.addEventListener('click', closeModal);
+            cancelBtn.addEventListener('click', closeModal);
+
+            // モーダルの外側（オーバーレイ）をクリックしても閉じるように設定
+            modal.addEventListener('click', function(e) {
+                if (e.target === modal) {
+                    closeModal();
+                }
+            });
+        });
+        // ▲▲▲ 確認モーダル用のスクリプト（ここまで） ▲▲▲
     </script>
 </body>
 </html>

@@ -31,13 +31,30 @@ body {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     padding: 15px 20px;
-    text-align: center;
+    /* text-align: center; ← flexboxで中央揃えするため不要になります */
+    display: flex; /* アイコンとテキストを横並びに */
+    align-items: center; /* 上下中央揃え */
+    justify-content: center; /* 左右中央揃え */
+    gap: 15px; /* アイコンとテキストの間隔 */
 }
+
+/* ▼▼▼ 以下をファイル末尾などに追加 ▼▼▼ */
+.header-icon {
+    width: 40px; /* アイコンの横幅を指定 */
+    height: auto; /* 高さは自動調整 */
+}
+
+.header-text {
+    text-align: left; /* テキストの開始位置を左揃えに */
+}
+/* ▲▲▲ ここまで追加 ▲▲▲ */
+
 
 .header h1 {
     font-size: 18px;
     margin-bottom: 5px;
     font-weight: 600;
+    margin: 0; /* 上下の余白をリセット */
 }
 
 .subtitle {
@@ -384,4 +401,93 @@ table tr:hover {
 .login-page-body .login-container {
     margin: 0; /* flexboxで中央揃えするため、既存のmarginをリセット */
 }
-/* ▲▲▲ 追加したスタイル ▲▲▲ */
+
+/* ▼▼▼ 確認モーダル用スタイル（ここから追記） ▼▼▼ */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: none; /* 初期状態は非表示 */
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 15px;
+}
+
+.modal-content {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    width: 100%;
+    max-width: 600px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #dee2e6;
+    padding-bottom: 10px;
+    margin-bottom: 15px;
+}
+
+.modal-header h2 {
+    font-size: 16px;
+    color: #333;
+}
+
+.modal-close-btn {
+    font-size: 24px;
+    font-weight: bold;
+    cursor: pointer;
+    color: #aaa;
+    padding: 0 5px;
+}
+.modal-close-btn:hover {
+    color: #333;
+}
+
+.modal-body {
+    overflow-y: auto; /* 内容が多い場合にスクロール */
+}
+
+#confirmationDetails ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+#confirmationDetails li {
+    padding: 8px 5px;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+#confirmationDetails li:last-child {
+    border-bottom: none;
+}
+
+#confirmationDetails li strong {
+    display: block;
+    color: #667eea;
+    margin-bottom: 3px;
+    font-size: 11px;
+}
+
+.modal-footer {
+    border-top: 1px solid #dee2e6;
+    padding-top: 15px;
+    margin-top: 20px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+/* ▲▲▲ 確認モーダル用スタイル（ここまで追記） ▲▲▲ */

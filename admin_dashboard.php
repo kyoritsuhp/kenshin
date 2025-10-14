@@ -39,6 +39,7 @@ if (isset($_GET['logout'])) {
     <title>管理者ダッシュボード</title>
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body class="dashboard-page">
     <div class="container">
         <header class="header" style="position: relative;">
