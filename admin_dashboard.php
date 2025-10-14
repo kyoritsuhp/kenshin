@@ -1,3 +1,7 @@
+<!--
+ファイル名称: admin_dashboard.php
+生成日時: 2025-10-02
+-->
 <?php
 session_start();
 
@@ -7,11 +11,14 @@ if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== tru
     exit;
 }
 
-// 設定ファイルを読み込む
-require_once 'config.php';
+// データベース接続
+$db_host = 'localhost';
+$db_name = 'monshin';
+$db_user = 'root';
+$db_pass = '';
 
 try {
-    $pdo = new PDO("mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4", DB_USER, DB_PASS);
+    $pdo = new PDO("mysql:host=$db_host;dbname=$db_name;charset=utf8mb4", $db_user, $db_pass);
     $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch(PDOException $e) {
     die("データベース接続エラー: " . $e->getMessage());
@@ -19,10 +26,10 @@ try {
 
 // 統計情報取得
 $total_responses = $pdo->query("SELECT COUNT(*) FROM questionnaire_responses")->fetchColumn();
-$today_responses = $pdo->query("SELECT COUNT(*) FROM questionnaire_responses WHERE submitted_at >= CURDATE() AND submitted_at < CURDATE() + INTERVAL 1 DAY")->fetchColumn();
+$today_responses = $pdo->query("SELECT COUNT(*) FROM questionnaire_responses WHERE DATE(submitted_at) = CURDATE()")->fetchColumn();
 
-// 全回答データ取得（response_idの昇順に変更）
-$stmt = $pdo->query("SELECT * FROM questionnaire_responses ORDER BY response_id ASC");
+// 全回答データ取得
+$stmt = $pdo->query("SELECT * FROM questionnaire_responses ORDER BY submitted_at DESC");
 $responses = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // ログアウト処理
@@ -49,6 +56,7 @@ if (isset($_GET['logout'])) {
         </header>
 
         <div style="padding: 20px;">
+            <!-- 統計情報 -->
             <div class="stats-grid">
                 <div class="stat-card">
                     <h3>総回答数</h3>
@@ -64,12 +72,14 @@ if (isset($_GET['logout'])) {
                 </div>
             </div>
 
+            <!-- アクションボタン -->
             <div class="action-buttons">
                 <a href="export_csv.php" class="btn btn-primary btn-small">CSV出力</a>
                 <a href="export_excel.php" class="btn btn-primary btn-small">Excel出力</a>
                 <button onclick="window.print()" class="btn btn-secondary btn-small">印刷</button>
             </div>
 
+            <!-- 回答一覧テーブル -->
             <div class="table-container">
                 <table>
                     <thead>
