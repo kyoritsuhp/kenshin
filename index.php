@@ -1,7 +1,3 @@
-<!--
-ファイル名称: index.php
-生成日時: 2025-10-02
--->
 <?php
 session_start();
 
@@ -31,9 +27,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = '職員IDを入力してください。';
     } else {
         try {
+            // ▼▼▼ 修正箇所 ▼▼▼
             $sql = "INSERT INTO questionnaire_responses (
                 staff_id, staff_name, department,
-                q1_blood_pressure_med, q2_insulin_med, q3_cholesterol_med,
+                q1_blood_pressure_med, q1_medicine_name,
+                q2_insulin_med, q2_medicine_name,
+                q3_cholesterol_med, q3_medicine_name,
                 q4_stroke, q5_heart_disease, q6_kidney_failure, q7_anemia,
                 q8_smoking, q9_weight_gain, q10_exercise, q11_walking,
                 q12_walking_speed, q13_weight_change, q14_eating_speed,
@@ -42,7 +41,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 q21_improvement_intention, q22_guidance_use
             ) VALUES (
                 :staff_id, :staff_name, :department,
-                :q1, :q2, :q3, :q4, :q5, :q6, :q7, :q8, :q9, :q10, :q11,
+                :q1, :q1_medicine_name,
+                :q2, :q2_medicine_name,
+                :q3, :q3_medicine_name,
+                :q4, :q5, :q6, :q7, :q8, :q9, :q10, :q11,
                 :q12, :q13, :q14, :q15, :q16, :q17, :q18, :q19, :q20, :q21, :q22
             )";
             
@@ -52,8 +54,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':staff_name' => $staff_name,
                 ':department' => $department,
                 ':q1' => $_POST['q1'] ?? null,
+                ':q1_medicine_name' => $_POST['q1_medicine_name'] ?? null,
                 ':q2' => $_POST['q2'] ?? null,
+                ':q2_medicine_name' => $_POST['q2_medicine_name'] ?? null,
                 ':q3' => $_POST['q3'] ?? null,
+                ':q3_medicine_name' => $_POST['q3_medicine_name'] ?? null,
                 ':q4' => $_POST['q4'] ?? null,
                 ':q5' => $_POST['q5'] ?? null,
                 ':q6' => $_POST['q6'] ?? null,
@@ -74,6 +79,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':q21' => $_POST['q21'] ?? null,
                 ':q22' => $_POST['q22'] ?? null,
             ]);
+            // ▲▲▲ 修正箇所 ▲▲▲
             
             $message = '問診票の送信が完了しました。ご協力ありがとうございました。';
         } catch(PDOException $e) {
@@ -106,7 +112,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
 
         <form method="POST" action="" class="questionnaire-form" id="questionnaireForm">
-            <!-- 職員情報 -->
             <div class="section">
                 <h2>職員情報</h2>
                 <div class="form-group">
@@ -123,7 +128,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             </div>
 
-            <!-- 質問1-3: 服薬状況 -->
             <div class="section">
                 <h2>服薬状況</h2>
                 <div class="question">
@@ -132,12 +136,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <label><input type="radio" name="q1" value="1" required> はい</label>
                         <label><input type="radio" name="q1" value="2"> いいえ</label>
                     </div>
+                    <div class="form-group" id="q1_medicine_name_group" style="display: none; margin-top: 10px;">
+                        <label for="q1_medicine_name" style="font-weight: normal;">もし「はい」の場合、お薬名を具体的に入力してください。</label>
+                        <input type="text" id="q1_medicine_name" name="q1_medicine_name" placeholder="例：アムロジピン">
+                    </div>
                 </div>
                 <div class="question">
                     <label>2. b. インスリン注射又は血糖を下げる薬</label>
                     <div class="radio-group">
                         <label><input type="radio" name="q2" value="1" required> はい</label>
                         <label><input type="radio" name="q2" value="2"> いいえ</label>
+                    </div>
+                    <div class="form-group" id="q2_medicine_name_group" style="display: none; margin-top: 10px;">
+                        <label for="q2_medicine_name" style="font-weight: normal;">もし「はい」の場合、お薬名を具体的に入力してください。</label>
+                        <input type="text" id="q2_medicine_name" name="q2_medicine_name" placeholder="例：メトホルミン">
                     </div>
                 </div>
                 <div class="question">
@@ -146,10 +158,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <label><input type="radio" name="q3" value="1" required> はい</label>
                         <label><input type="radio" name="q3" value="2"> いいえ</label>
                     </div>
+                    <div class="form-group" id="q3_medicine_name_group" style="display: none; margin-top: 10px;">
+                        <label for="q3_medicine_name" style="font-weight: normal;">もし「はい」の場合、お薬名を具体的に入力してください。</label>
+                        <input type="text" id="q3_medicine_name" name="q3_medicine_name" placeholder="例：ロスバスタチン">
+                    </div>
                 </div>
             </div>
 
-            <!-- 質問4-7: 既往歴 -->
             <div class="section">
                 <h2>既往歴</h2>
                 <div class="question">
@@ -182,7 +197,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             </div>
 
-            <!-- 質問8-13: 生活習慣 -->
             <div class="section">
                 <h2>生活習慣</h2>
                 <div class="question">
@@ -229,7 +243,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             </div>
 
-            <!-- 質問14-17: 食生活 -->
             <div class="section">
                 <h2>食生活</h2>
                 <div class="question">
@@ -263,7 +276,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             </div>
 
-            <!-- 質問18-19: 飲酒 -->
             <div class="section">
                 <h2>飲酒</h2>
                 <div class="question">
@@ -285,7 +297,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             </div>
 
-            <!-- 質問20: 睡眠 -->
             <div class="section">
                 <h2>睡眠</h2>
                 <div class="question">
@@ -297,7 +308,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             </div>
 
-            <!-- 質問21-22: 改善意欲 -->
             <div class="section">
                 <h2>生活習慣改善について</h2>
                 <div class="question">
@@ -337,6 +347,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 e.preventDefault();
             }
         });
+
+        /**
+         * ラジオボタンの選択に応じて特定の要素の表示/非表示を切り替える関数
+         * @param {string} radioName - ラジオボタンのname属性
+         * @param {string} targetGroupId - 表示/非表示を切り替える要素のID
+         */
+        function setupDynamicForm(radioName, targetGroupId) {
+            const radios = document.querySelectorAll(`input[name="${radioName}"]`);
+            const targetGroup = document.getElementById(targetGroupId);
+            const targetInput = targetGroup.querySelector('input[type="text"]');
+
+            radios.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    if (this.value === '1') { // 「はい」が選択された場合
+                        targetGroup.style.display = 'block';
+                    } else { // 「いいえ」が選択された場合
+                        targetGroup.style.display = 'none';
+                        if(targetInput) targetInput.value = ''; // テキスト入力をクリア
+                    }
+                });
+            });
+        }
+
+        // 各質問に動的フォーム機能を設定
+        setupDynamicForm('q1', 'q1_medicine_name_group');
+        setupDynamicForm('q2', 'q2_medicine_name_group');
+        setupDynamicForm('q3', 'q3_medicine_name_group');
+
     </script>
 </body>
 </html>

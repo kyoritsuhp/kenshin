@@ -1,7 +1,3 @@
-<!--
-ファイル名称: admin_dashboard.php
-生成日時: 2025-10-02
--->
 <?php
 session_start();
 
@@ -24,10 +20,6 @@ try {
     die("データベース接続エラー: " . $e->getMessage());
 }
 
-// 統計情報取得
-$total_responses = $pdo->query("SELECT COUNT(*) FROM questionnaire_responses")->fetchColumn();
-$today_responses = $pdo->query("SELECT COUNT(*) FROM questionnaire_responses WHERE DATE(submitted_at) = CURDATE()")->fetchColumn();
-
 // 全回答データ取得
 $stmt = $pdo->query("SELECT * FROM questionnaire_responses ORDER BY submitted_at DESC");
 $responses = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -47,7 +39,7 @@ if (isset($_GET['logout'])) {
     <title>管理者ダッシュボード</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="dashboard-page">
     <div class="container">
         <header class="header" style="position: relative;">
             <h1>管理者ダッシュボード</h1>
@@ -56,30 +48,12 @@ if (isset($_GET['logout'])) {
         </header>
 
         <div style="padding: 20px;">
-            <!-- 統計情報 -->
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <h3>総回答数</h3>
-                    <div class="number"><?php echo $total_responses; ?></div>
-                </div>
-                <div class="stat-card">
-                    <h3>本日の回答数</h3>
-                    <div class="number"><?php echo $today_responses; ?></div>
-                </div>
-                <div class="stat-card">
-                    <h3>回答率</h3>
-                    <div class="number"><?php echo round(($total_responses / 500) * 100, 1); ?>%</div>
-                </div>
-            </div>
-
-            <!-- アクションボタン -->
             <div class="action-buttons">
                 <a href="export_csv.php" class="btn btn-primary btn-small">CSV出力</a>
                 <a href="export_excel.php" class="btn btn-primary btn-small">Excel出力</a>
                 <button onclick="window.print()" class="btn btn-secondary btn-small">印刷</button>
             </div>
 
-            <!-- 回答一覧テーブル -->
             <div class="table-container">
                 <table>
                     <thead>
@@ -89,8 +63,11 @@ if (isset($_GET['logout'])) {
                             <th>氏名</th>
                             <th>部署</th>
                             <th>Q1</th>
+                            <th>Q1薬名</th>
                             <th>Q2</th>
+                            <th>Q2薬名</th>
                             <th>Q3</th>
+                            <th>Q3薬名</th>
                             <th>Q4</th>
                             <th>Q5</th>
                             <th>Q6</th>
@@ -116,13 +93,16 @@ if (isset($_GET['logout'])) {
                     <tbody>
                         <?php foreach ($responses as $row): ?>
                         <tr>
-                            <td><?php echo htmlspecialchars($row['response_id']); ?></td>
+                            <td><a href="admin_index.php?id=<?php echo htmlspecialchars($row['response_id']); ?>"><?php echo htmlspecialchars($row['response_id']); ?></a></td>
                             <td><?php echo htmlspecialchars($row['staff_id']); ?></td>
                             <td><?php echo htmlspecialchars($row['staff_name']); ?></td>
                             <td><?php echo htmlspecialchars($row['department']); ?></td>
                             <td><?php echo htmlspecialchars($row['q1_blood_pressure_med']); ?></td>
+                            <td><?php echo htmlspecialchars($row['q1_medicine_name']); ?></td>
                             <td><?php echo htmlspecialchars($row['q2_insulin_med']); ?></td>
+                            <td><?php echo htmlspecialchars($row['q2_medicine_name']); ?></td>
                             <td><?php echo htmlspecialchars($row['q3_cholesterol_med']); ?></td>
+                            <td><?php echo htmlspecialchars($row['q3_medicine_name']); ?></td>
                             <td><?php echo htmlspecialchars($row['q4_stroke']); ?></td>
                             <td><?php echo htmlspecialchars($row['q5_heart_disease']); ?></td>
                             <td><?php echo htmlspecialchars($row['q6_kidney_failure']); ?></td>

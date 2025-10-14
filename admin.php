@@ -1,7 +1,3 @@
-<!--
-ファイル名称: admin.php
-生成日時: 2025-10-02
--->
 <?php
 session_start();
 
@@ -47,8 +43,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
     <title>管理者ログイン</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
-    <div class="login-container">
+<body class="login-page-body">
+<div class="login-container">
         <h1>管理者ログイン</h1>
         
         <?php if ($error): ?>
