@@ -132,15 +132,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
 
         <form method="POST" action="" class="questionnaire-form" id="questionnaireForm">
-        
             <div class="section">
                 <h2>健康診断情報</h2>
                 <?php if ($isFixed): ?>
                     <div class="form-group">
-                        <label>
-                            年度・時期
-                            <span style="font-size: 11px; color: #dc3545; font-weight: bold; margin-left: 10px;">※健診担当者によって固定されています。</span>
-                        </label>
+                        <label>年度・時期</label>
                         <div class="radio-group">
                              <label>
                                 <input type="radio" name="health_check_year" value="<?php echo htmlspecialchars($defaults['year'] ?? ''); ?>" checked disabled>
@@ -177,7 +173,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                 <?php endif; ?>
             </div>
-            
+
             <div class="section">
                 <h2>職員情報</h2>
                 <div class="form-group">
@@ -193,8 +189,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <input type="text" id="department" name="department">
                 </div>
             </div>
-
-
 
             <div class="section">
                 <h2>服薬状況</h2>
