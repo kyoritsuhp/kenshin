@@ -40,33 +40,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>管理者ログイン</title>
+    <title>管理者ログイン - 健診問診票</title>
     <link rel="stylesheet" href="style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
-<body class="login-page-body">
-<div class="login-container">
-        <h1>管理者ログイン</h1>
-        
-        <?php if ($error): ?>
-            <div class="message error"><?php echo htmlspecialchars($error); ?></div>
-        <?php endif; ?>
-        
-        <form method="POST" action="">
-            <div class="form-group">
-                <label for="id">管理者ID</label>
-                <input type="text" id="id" name="id" required autofocus>
-            </div>
-            <div class="form-group">
-                <label for="password">パスワード</label>
-                <input type="password" id="password" name="password" required>
-            </div>
-            <div class="button-group">
-                <button type="submit" name="login" class="btn btn-primary">ログイン</button>
-            </div>
-        </form>
-        
-        <div class="admin-link">
-            <a href="index.php">問診票入力画面に戻る</a>
+<body>
+    <div class="login-container">
+        <div class="login-box">
+            <h2><i class="fas fa-user-shield"></i> 健診問診票 管理者ログイン</h2>
+            <?php if ($error): ?>
+                <div class="alert alert-error">
+                    <i class="fas fa-exclamation-triangle"></i> <?= htmlspecialchars($error) ?>
+                </div>
+            <?php endif; ?>
+            <form method="POST">
+                <div class="form-group">
+                    <label for="id"><i class="fas fa-user"></i> 管理者ID</label>
+                    <input type="text" id="id" name="id" class="form-control" value="<?= htmlspecialchars($_POST['id'] ?? '') ?>" placeholder="管理者IDを入力" required autofocus>
+                </div>
+                <div class="form-group">
+                    <label for="password"><i class="fas fa-lock"></i> パスワード</label>
+                    <input type="password" id="password" name="password" class="form-control" placeholder="パスワードを入力" required>
+                </div>
+                <button type="submit" name="login" class="btn btn-primary"><i class="fas fa-sign-in-alt"></i> ログイン</button>
+            </form>
+            <a href="index.php" class="back-link"><i class="fas fa-arrow-left"></i> 問診票入力画面に戻る</a>
         </div>
     </div>
 </body>

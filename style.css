@@ -38,6 +38,28 @@ body {
     align-items: center;
     justify-content: center;
     gap: 15px;
+    position: relative; /* 子要素を絶対配置するための基準点とします */
+}
+
+/* トップページへ戻るボタンのスタイル */
+.back-to-portal-btn {
+    position: absolute;
+    top: 50%;
+    left: 20px;
+    transform: translateY(-50%);
+    color: white;
+    text-decoration: none;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 8px 12px;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 5px;
+    transition: background-color 0.3s, border-color 0.3s;
+}
+
+.back-to-portal-btn:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: white;
 }
 
 .header-icon {
@@ -366,30 +388,86 @@ body {
 /* ===============================================
    admin.php (管理者ログイン画面) のスタイル
    =============================================== */
-.login-page-body {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-.login-page-body .login-container {
-    margin: 0;
-}
-
 .login-container {
-    max-width: 400px;
-    margin: 50px auto;
-    padding: 30px;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
 }
 
-.login-container h1 {
-    font-size: 14px;
-    margin-bottom: 20px;
+.login-box {
+    background: white;
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    width: 100%;
+    max-width: 400px;
     text-align: center;
-    color: #667eea;
+}
+
+.login-box h2 {
+    margin-bottom: 30px;
+    color: #495057;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.login-box .form-group {
+    text-align: left;
+    margin-bottom: 20px;
+}
+
+.login-box .form-control {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 13px;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.login-box .form-control:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.25);
+}
+
+.login-box .btn {
+    width: 100%;
+    padding: 12px;
+    font-size: 14px;
+    margin-top: 10px;
+}
+
+.back-link {
+    display: inline-block;
+    margin-top: 20px;
+    color: #6c757d;
+    text-decoration: none;
+    font-size: 12px;
+    transition: color 0.3s ease;
+}
+
+.back-link:hover {
+    color: #495057;
+    text-decoration: underline;
+}
+
+.alert { 
+    padding: 12px 15px; 
+    border-radius: 6px; 
+    margin-bottom: 20px; 
+    display: flex; 
+    align-items: center; 
+    gap: 8px; 
+    text-align: left;
+}
+
+.alert-error { 
+    background: #f8d7da; 
+    color: #721c24; 
+    border: 1px solid #f5c6cb; 
 }
 
 /* ===============================================
@@ -460,5 +538,24 @@ table tr:hover {
 }
 
 .logout-btn:hover {
+    background: rgba(255,255,255,0.3);
+}
+.back-to-form-btn {
+    position: absolute;
+    top: 50%;
+    left: 20px;
+    transform: translateY(-50%);
+    padding: 6px 12px;
+    background: rgba(255,255,255,0.2);
+    color: white;
+    border: 1px solid white;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background-color 0.3s;
+}
+
+.back-to-form-btn:hover {
     background: rgba(255,255,255,0.3);
 }

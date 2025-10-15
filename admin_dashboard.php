@@ -43,6 +43,7 @@ if (isset($_GET['logout'])) {
 <body class="dashboard-page">
     <div class="container">
         <header class="header" style="position: relative;">
+            <a href="index.php" class="back-to-form-btn">← 問診票入力画面に戻る</a>
             <h1>管理者ダッシュボード</h1>
             <p class="subtitle">問診票回答管理</p>
             <a href="?logout=1" class="logout-btn">ログアウト</a>

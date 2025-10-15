@@ -116,6 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <body>
     <div class="container">
         <header class="header">
+            <a href="../hospital_portal/index.php" class="back-to-portal-btn">← トップページに戻る</a>
             <img src="images/monshin_13458.png" alt="問診票アイコン" class="header-icon">
             <div class="header-text">
                 <h1>職員健康診断 問診票</h1>
