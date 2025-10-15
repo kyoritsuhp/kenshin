@@ -132,6 +132,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <?php endif; ?>
 
         <form method="POST" action="" class="questionnaire-form" id="questionnaireForm">
+        
+            <div class="section">
+                <h2>健康診断情報</h2>
+                <?php if ($isFixed): ?>
+                    <div class="form-group">
+                        <label>
+                            年度・時期
+                            <span style="font-size: 11px; color: #dc3545; font-weight: bold; margin-left: 10px;">※健診担当者によって固定されています。</span>
+                        </label>
+                        <div class="radio-group">
+                             <label>
+                                <input type="radio" name="health_check_year" value="<?php echo htmlspecialchars($defaults['year'] ?? ''); ?>" checked disabled>
+                                <?php echo htmlspecialchars($defaults['year'] ?? ''); ?>年
+                            </label>
+                            <label>
+                                <input type="radio" name="health_check_season" value="<?php echo htmlspecialchars($defaults['season'] ?? ''); ?>" checked disabled>
+                                <?php echo htmlspecialchars($defaults['season'] ?? ''); ?>
+                            </label>
+                        </div>
+                    </div>
+                <?php else: ?>
+                    <div class="form-group">
+                        <label>年度 <span class="required">*必須</span></label>
+                        <div class="radio-group">
+                            <?php for ($y = 2025; $y <= 2030; $y++): ?>
+                                <label>
+                                    <input type="radio" name="health_check_year" value="<?php echo $y; ?>" required>
+                                    <?php echo $y; ?>年
+                                </label>
+                            <?php endfor; ?>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>時期 <span class="required">*必須</span></label>
+                        <div class="radio-group">
+                            <label>
+                                <input type="radio" name="health_check_season" value="春" required> 春
+                            </label>
+                            <label>
+                                <input type="radio" name="health_check_season" value="冬"> 冬
+                            </label>
+                        </div>
+                    </div>
+                <?php endif; ?>
+            </div>
+            
             <div class="section">
                 <h2>職員情報</h2>
                 <div class="form-group">
@@ -148,44 +194,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             </div>
 
-            <div class="section">
-                <h2>
-                    健康診断情報
-                    <?php if ($isFixed): ?>
-                        <span style="font-size: 11px; color: #dc3545; font-weight: bold; margin-right: 10px;">※健診担当者によって固定されています。</span>
-                    <?php endif; ?>
-                </h2>
-                <div class="form-group">
-                    <label>年度 <?php if (!$isFixed) echo '<span class="required">*必須</span>'; ?></label>
-                    <div class="radio-group">
-                        <?php for ($y = 2025; $y <= 2030; $y++): ?>
-                            <label>
-                                <input type="radio" name="health_check_year" value="<?php echo $y; ?>"
-                                    <?php if ($isFixed && ($defaults['year'] ?? '') == $y) echo 'checked'; ?>
-                                    <?php if (!$isFixed) echo 'required'; ?>
-                                    <?php if ($isFixed) echo 'disabled'; ?>>
-                                <?php echo $y; ?>年
-                            </label>
-                        <?php endfor; ?>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>時期 <?php if (!$isFixed) echo '<span class="required">*必須</span>'; ?></label>
-                    <div class="radio-group">
-                        <label>
-                            <input type="radio" name="health_check_season" value="春"
-                                <?php if ($isFixed && ($defaults['season'] ?? '') === '春') echo 'checked'; ?>
-                                <?php if (!$isFixed) echo 'required'; ?>
-                                <?php if ($isFixed) echo 'disabled'; ?>> 春
-                        </label>
-                        <label>
-                            <input type="radio" name="health_check_season" value="冬"
-                                <?php if ($isFixed && ($defaults['season'] ?? '') === '冬') echo 'checked'; ?>
-                                <?php if ($isFixed) echo 'disabled'; ?>> 冬
-                        </label>
-                    </div>
-                </div>
-            </div>
+
 
             <div class="section">
                 <h2>服薬状況</h2>
@@ -485,7 +494,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // ラジオボタンの選択値を取得してテキストに変換する関数
             function getRadioValueText(name) {
                 const checkedRadio = form.querySelector(`input[name="${name}"]:checked`);
-                if (!checkedRadio) return '<span style="color: red;">未選択</span>';
+                 if (!checkedRadio) {
+                    // 固定されている場合、disabledのラジオから値を取得
+                    const disabledRadio = form.querySelector(`input[name="${name}"]:disabled`);
+                    if(disabledRadio) return valueMappings[name] ? (valueMappings[name][disabledRadio.value] || '不明') : disabledRadio.value;
+                    return '<span style="color: red;">未選択</span>';
+                }
                 return valueMappings[name][checkedRadio.value] || '不明';
             }
 
