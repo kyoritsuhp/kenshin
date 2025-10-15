@@ -17,19 +17,35 @@ try {
 $message = '';
 $error = '';
 
+// 設定ファイルの読み込み
+$defaults = [];
+$configFile = 'config.json';
+if (file_exists($configFile)) {
+    $defaults = json_decode(file_get_contents($configFile), true);
+}
+$isFixed = ($defaults['enabled'] ?? false);
+
 // フォーム送信処理
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $staff_id = trim($_POST['staff_id'] ?? '');
     $staff_name = trim($_POST['staff_name'] ?? '');
     $department = trim($_POST['department'] ?? '');
 
+    // デフォルト設定が有効な場合は、POSTされた値ではなく設定値を使用
+    if ($isFixed) {
+        $health_check_year = $defaults['year'] ?? null;
+        $health_check_season = $defaults['season'] ?? null;
+    } else {
+        $health_check_year = trim($_POST['health_check_year'] ?? '');
+        $health_check_season = trim($_POST['health_check_season'] ?? '');
+    }
+
     if (empty($staff_id)) {
         $error = '職員IDを入力してください。';
     } else {
         try {
-            // ▼▼▼ 修正箇所 ▼▼▼
             $sql = "INSERT INTO questionnaire_responses (
-                staff_id, staff_name, department,
+                staff_id, staff_name, department, health_check_year, health_check_season,
                 q1_blood_pressure_med, q1_medicine_name,
                 q2_insulin_med, q2_medicine_name,
                 q3_cholesterol_med, q3_medicine_name,
@@ -40,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 q18_alcohol_frequency, q19_alcohol_amount, q20_sleep,
                 q21_improvement_intention, q22_guidance_use
             ) VALUES (
-                :staff_id, :staff_name, :department,
+                :staff_id, :staff_name, :department, :health_check_year, :health_check_season,
                 :q1, :q1_medicine_name,
                 :q2, :q2_medicine_name,
                 :q3, :q3_medicine_name,
@@ -53,6 +69,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':staff_id' => $staff_id,
                 ':staff_name' => $staff_name,
                 ':department' => $department,
+                ':health_check_year' => $health_check_year,
+                ':health_check_season' => $health_check_season,
                 ':q1' => $_POST['q1'] ?? null,
                 ':q1_medicine_name' => $_POST['q1_medicine_name'] ?? null,
                 ':q2' => $_POST['q2'] ?? null,
@@ -79,7 +97,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':q21' => $_POST['q21'] ?? null,
                 ':q22' => $_POST['q22'] ?? null,
             ]);
-            // ▲▲▲ 修正箇所 ▲▲▲
 
             $message = '問診票の送信が完了しました。ご協力ありがとうございました。';
         } catch(PDOException $e) {
@@ -128,6 +145,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 <div class="form-group">
                     <label for="department">所属部署</label>
                     <input type="text" id="department" name="department">
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>
+                    健康診断情報
+                    <?php if ($isFixed): ?>
+                        <span style="font-size: 11px; color: #dc3545; font-weight: bold; margin-right: 10px;">※健診担当者によって固定されています。</span>
+                    <?php endif; ?>
+                </h2>
+                <div class="form-group">
+                    <label>年度 <?php if (!$isFixed) echo '<span class="required">*必須</span>'; ?></label>
+                    <div class="radio-group">
+                        <?php for ($y = 2025; $y <= 2030; $y++): ?>
+                            <label>
+                                <input type="radio" name="health_check_year" value="<?php echo $y; ?>"
+                                    <?php if ($isFixed && ($defaults['year'] ?? '') == $y) echo 'checked'; ?>
+                                    <?php if (!$isFixed) echo 'required'; ?>
+                                    <?php if ($isFixed) echo 'disabled'; ?>>
+                                <?php echo $y; ?>年
+                            </label>
+                        <?php endfor; ?>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>時期 <?php if (!$isFixed) echo '<span class="required">*必須</span>'; ?></label>
+                    <div class="radio-group">
+                        <label>
+                            <input type="radio" name="health_check_season" value="春"
+                                <?php if ($isFixed && ($defaults['season'] ?? '') === '春') echo 'checked'; ?>
+                                <?php if (!$isFixed) echo 'required'; ?>
+                                <?php if ($isFixed) echo 'disabled'; ?>> 春
+                        </label>
+                        <label>
+                            <input type="radio" name="health_check_season" value="冬"
+                                <?php if ($isFixed && ($defaults['season'] ?? '') === '冬') echo 'checked'; ?>
+                                <?php if ($isFixed) echo 'disabled'; ?>> 冬
+                        </label>
+                    </div>
                 </div>
             </div>
 
@@ -362,9 +418,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <script>
-        // フォーム送信前の確認（古いコードは削除）
-        // document.getElementById('questionnaireForm').addEventListener('submit', function(e) { ... });
-
         /**
          * ラジオボタンの選択に応じて特定の要素の表示/非表示を切り替える関数
          * @param {string} radioName - ラジオボタンのname属性
@@ -403,6 +456,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // 質問の選択肢の値を表示用のテキストに変換するための対応表
             const valueMappings = {
+                health_check_year: { '2025': '2025年', '2026': '2026年', '2027': '2027年', '2028': '2028年', '2029': '2029年', '2030': '2030年' },
+                health_check_season: { '春': '春', '冬': '冬' },
                 q1: { '1': 'はい', '2': 'いいえ' },
                 q2: { '1': 'はい', '2': 'いいえ' },
                 q3: { '1': 'はい', '2': 'いいえ' },
@@ -454,6 +509,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 detailsHtml += `<li><strong>職員ID:</strong> ${getInputValue('staff_id')}</li>`;
                 detailsHtml += `<li><strong>氏名:</strong> ${getInputValue('staff_name')}</li>`;
                 detailsHtml += `<li><strong>所属部署:</strong> ${getInputValue('department')}</li>`;
+                detailsHtml += `<li><strong>年度:</strong> ${getRadioValueText('health_check_year')}</li>`;
+                detailsHtml += `<li><strong>時期:</strong> ${getRadioValueText('health_check_season')}</li>`;
 
                 // 全ての質問項目をループして内容を生成
                 document.querySelectorAll('.question').forEach(q => {
@@ -491,7 +548,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             });
         });
-        // ▲▲▲ 確認モーダル用のスクリプト（ここまで） ▲▲▲
     </script>
 </body>
 </html>

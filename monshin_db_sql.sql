@@ -26,8 +26,11 @@ CREATE TABLE IF NOT EXISTS questionnaire_responses (
     
     -- 質問1-3: 薬の使用
     q1_blood_pressure_med TINYINT COMMENT '1:はい, 2:いいえ',
+    q1_medicine_name VARCHAR(255) COMMENT 'Q1の具体的な薬名',
     q2_insulin_med TINYINT COMMENT '1:はい, 2:いいえ',
+    q2_medicine_name VARCHAR(255) COMMENT 'Q2の具体的な薬名',
     q3_cholesterol_med TINYINT COMMENT '1:はい, 2:いいえ',
+    q3_medicine_name VARCHAR(255) COMMENT 'Q3の具体的な薬名',
     
     -- 質問4-7: 既往歴
     q4_stroke TINYINT COMMENT '1:はい, 2:いいえ',

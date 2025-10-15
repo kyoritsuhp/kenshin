@@ -53,6 +53,7 @@ if (isset($_GET['logout'])) {
                 <a href="export_csv.php" class="btn btn-primary btn-small">CSV出力</a>
                 <a href="export_excel.php" class="btn btn-primary btn-small">Excel出力</a>
                 <button onclick="window.print()" class="btn btn-secondary btn-small">印刷</button>
+                <a href="admin_manage.php" class="btn btn-primary btn-small">管理画面</a>
             </div>
 
             <div class="table-container">
@@ -63,6 +64,8 @@ if (isset($_GET['logout'])) {
                             <th>職員ID</th>
                             <th>氏名</th>
                             <th>部署</th>
+                            <th>年度</th>
+                            <th>時期</th>
                             <th>Q1</th>
                             <th>Q1薬名</th>
                             <th>Q2</th>
@@ -98,6 +101,8 @@ if (isset($_GET['logout'])) {
                             <td><?php echo htmlspecialchars($row['staff_id']); ?></td>
                             <td><?php echo htmlspecialchars($row['staff_name']); ?></td>
                             <td><?php echo htmlspecialchars($row['department']); ?></td>
+                            <td><?php echo htmlspecialchars($row['health_check_year']); ?></td>
+                            <td><?php echo htmlspecialchars($row['health_check_season']); ?></td>
                             <td><?php echo htmlspecialchars($row['q1_blood_pressure_med']); ?></td>
                             <td><?php echo htmlspecialchars($row['q1_medicine_name']); ?></td>
                             <td><?php echo htmlspecialchars($row['q2_insulin_med']); ?></td>
