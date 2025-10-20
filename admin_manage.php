@@ -22,11 +22,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $year = $_POST['health_check_year'] ?? null;
     $season = $_POST['health_check_season'] ?? null;
     $enable_defaults = isset($_POST['enable_defaults']);
+    
+    // ▼▼▼ 追加 ▼▼▼
+    // ポータルサイトへのリンク表示設定を取得
+    $show_portal_link = isset($_POST['show_portal_link']);
+    // ▲▲▲ 追加 ▲▲▲
 
     $newDefaults = [
         'year' => $year,
         'season' => $season,
-        'enabled' => $enable_defaults
+        'enabled' => $enable_defaults,
+        'show_portal_link' => $show_portal_link // <-- 保存データに追加
     ];
 
     if (file_put_contents($configFile, json_encode($newDefaults, JSON_PRETTY_PRINT))) {
@@ -61,6 +67,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php endif; ?>
 
             <form method="POST" action="">
+            
+                <div class="section">
+                    <h2>ポータルサイト連携設定</h2>
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" name="show_portal_link" value="1" <?php 
+                                // デフォルトは表示(true)
+                                echo ($defaults['show_portal_link'] ?? true) ? 'checked' : ''; 
+                            ?>>
+                            ポータルサイトのメニューに「健診問診票」リンクを表示する
+                        </label>
+                    </div>
+                </div>
+                
                 <div class="section">
                     <h2>健康診断のデフォルト設定</h2>
                     <p style="font-size: 11px; color: #666; margin-bottom: 15px;">
@@ -97,7 +117,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
                     </div>
                 </div>
-
                 <div class="button-group">
                     <button type="submit" class="btn btn-primary">設定を保存</button>
                     <a href="admin_dashboard.php" class="btn btn-secondary" style="text-decoration: none;">ダッシュボードに戻る</a>
