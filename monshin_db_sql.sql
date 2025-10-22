@@ -77,3 +77,5 @@ USE monshin;
 ALTER TABLE questionnaire_responses
   ADD COLUMN health_check_year VARCHAR(4) AFTER department,
   ADD COLUMN health_check_season VARCHAR(10) AFTER health_check_year;
+
+  ALTER TABLE questionnaire_responses MODIFY staff_id VARCHAR(50) NULL;

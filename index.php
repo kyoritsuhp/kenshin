@@ -41,9 +41,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $health_check_season = trim($_POST['health_check_season'] ?? '');
     }
 
-    if (empty($staff_id)) {
-        $error = '職員IDを入力してください。';
-    } else {
+    // ▼▼▼ 職員IDが必須のチェックを削除 ▼▼▼
+    // if (empty($staff_id)) {
+    //     $error = '職員IDを入力してください。';
+    // } else {
         try {
             $sql = "INSERT INTO questionnaire_responses (
                 staff_id, staff_name, department, facility_name, health_check_year, health_check_season,
@@ -67,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $stmt = $pdo->prepare($sql);
             $stmt->execute([
-                ':staff_id' => $staff_id,
+                ':staff_id' => $staff_id, // 空の可能性あり
                 ':staff_name' => $staff_name,
                 ':department' => $department,
                 ':facility_name' => $facility_name, // ★ 追加
@@ -104,7 +105,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } catch(PDOException $e) {
             $error = '送信中にエラーが発生しました: ' . $e->getMessage();
         }
-    }
+    // } // 必須チェックを削除したため、閉じ括弧 } も削除
+    // ▲▲▲ 職員IDが必須のチェックを削除 ▲▲▲
 }
 ?>
 <!DOCTYPE html>
@@ -205,8 +207,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="staff_id">職員ID </label>
-                        <input type="text" id="staff_id" name="staff_id" required>
+                        <label for="staff_id">職員ID</label>
+                        <input type="text" id="staff_id" name="staff_id">
                     </div>
                     <div class="form-group">
                         <label for="staff_name">氏名</label>
@@ -648,6 +650,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             function getInputValue(id) {
                 const element = document.getElementById(id);
                 const value = element ? element.value.trim() : '';
+                // ▼▼▼ 職員IDが任意の入力になったため、未入力の表示を変更 ▼▼▼
+                if (id === 'staff_id' && value === '') {
+                    return '未入力';
+                }
                 return value ? htmlspecialchars(value) : '未入力';
             }
 
@@ -759,7 +765,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     });
 
                     form.querySelectorAll('input[required], select[required], textarea[required]').forEach(input => {
-                        if (input.type === 'radio' || input.disabled) return;
+                        // ▼▼▼ 職員ID (staff_id) はチェック対象外にする ▼▼▼
+                        if (input.type === 'radio' || input.disabled || input.id === 'staff_id') return;
                         if (!input.checkValidity()) {
                             allValid = false;
                         }
@@ -783,5 +790,3 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </script>
 </body>
 </html>
-
-

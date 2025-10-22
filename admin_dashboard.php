@@ -25,10 +25,33 @@ $facility_filter = $_GET['facility'] ?? 'all';
 $year_filter = $_GET['year'] ?? 'all';
 $season_filter = $_GET['season'] ?? 'all';
 
+// ▼▼▼ ソート処理を追加 ▼▼▼
+// ホワイトリスト方式で許可するカラムを定義
+$allowed_sort_columns = [
+    'response_id', 
+    'staff_id', 
+    'staff_name', 
+    'department', 
+    'facility_name', 
+    'health_check_year', 
+    'health_check_season', 
+    'submitted_at'
+];
+$sort_by = $_GET['sort_by'] ?? 'submitted_at';
+// GETパラメータが 'asc' の場合のみ 'ASC' とし、それ以外 (desc, null, 不正な値) は 'DESC' とする
+$sort_order = strtolower($_GET['sort_order'] ?? 'desc') === 'asc' ? 'ASC' : 'DESC';
+
+// $sort_by が許可リストに含まれていない場合は、デフォルト値（submitted_at）に戻す
+if (!in_array($sort_by, $allowed_sort_columns)) {
+    $sort_by = 'submitted_at';
+}
+// ▲▲▲ ソート処理を追加 ▲▲▲
+
+
 $sql_base = "SELECT * FROM questionnaire_responses";
 $where_clauses = [];
 $params = [];
-$query_string_params = []; // For export links
+$query_string_params = []; // For export links & sort links
 
 if ($facility_filter !== 'all') {
     $where_clauses[] = "facility_name = :facility_name";
@@ -50,18 +73,54 @@ $sql = $sql_base;
 if (!empty($where_clauses)) {
     $sql .= " WHERE " . implode(" AND ", $where_clauses);
 }
-$sql .= " ORDER BY submitted_at DESC";
+
+// ▼▼▼ ソート順を動的に変更 ▼▼▼
+$sql .= " ORDER BY $sort_by $sort_order";
+// ▲▲▲ ソート順を動的に変更 ▲▲▲
 
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $responses = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// エクスポート用のクエリ文字列
+// エクスポート用のクエリ文字列 (フィルターのみ)
 $export_query_string = http_build_query($query_string_params);
 if (!empty($export_query_string)) {
     $export_query_string = '?' . $export_query_string;
 }
-// --- フィルター処理ここまで ---
+
+// --- ▼▼▼ 汎用ソートリンク生成関数 (修正済み) ▼▼▼ ---
+// ソート用のリンクとインジケーター（▲▼）を生成する関数
+function get_sort_link($column_name, $display_name, $current_sort_by, $current_sort_order, $base_params) {
+    // $current_sort_order は DB接続時に 'ASC' または 'DESC' に正規化されている
+    
+    $next_sort_order = 'asc'; // デフォルトのリンク先 (ソートされていない列をクリックした時)
+    $indicator = '';
+
+    // 現在ソート中の列が、この関数の対象列と同じ場合
+    if ($current_sort_by === $column_name) {
+        // ★修正点: $current_sort_order が 'asc' ではなく 'ASC' (大文字) かをチェック
+        if ($current_sort_order === 'ASC') {
+            // 現在 '昇順' なので、次のリンクは '降順 (desc)' にする
+            $next_sort_order = 'desc'; 
+            $indicator = ' <span class="sort-asc">▲</span>';
+        } else {
+            // 現在 '降順 (DESC)' なので、次のリンクは '昇順 (asc)' にする
+            $next_sort_order = 'asc'; // ★修正点: 'asc' を明示的に指定
+            $indicator = ' <span class="sort-desc">▼</span>';
+        }
+    }
+
+    // 既存のフィルターパラメータにソートパラメータを追加
+    $link_params = $base_params;
+    $link_params['sort_by'] = $column_name;
+    $link_params['sort_order'] = $next_sort_order;
+    
+    $url = 'admin_dashboard.php?' . http_build_query($link_params);
+    
+    // HTMLリンクを返す
+    return '<a href="' . htmlspecialchars($url) . '">' . htmlspecialchars($display_name) . $indicator . '</a>';
+}
+// --- ▲▲▲ 汎用ソートリンク生成関数 (修正済み) ▲▲▲ ---
 
 
 // ログアウト処理
@@ -82,7 +141,6 @@ $years = $pdo->query("SELECT DISTINCT health_check_year FROM questionnaire_respo
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>管理者ダッシュボード</title>
     <link rel="stylesheet" href="style.css">
-    <!-- フィルタースタイルを追加 -->
     <style>
         .filter-section {
             background: #f8f9fa;
@@ -118,9 +176,6 @@ $years = $pdo->query("SELECT DISTINCT health_check_year FROM questionnaire_respo
             background: #e9ecef;
             border-color: #667eea;
         }
-        .filter-options label input[type="radio"] {
-            margin-right: 5px;
-        }
         .filter-options label:has(input[type="radio"]:checked) {
             background: #667eea;
             color: white;
@@ -133,16 +188,28 @@ $years = $pdo->query("SELECT DISTINCT health_check_year FROM questionnaire_respo
             padding-top: 15px;
             border-top: 1px solid #dee2e6;
         }
-        /* ▼▼▼ 横並び用スタイルを追加 ▼▼▼ */
         .filter-row {
             display: flex;
-            gap: 20px; /* グループ間の隙間 */
+            gap: 20px;
         }
         .filter-row .filter-group {
-            flex: 1; /* 幅を均等に分割 */
-            min-width: 0; /* flexアイテムが縮小できるように */
+            flex: 1;
+            min-width: 0;
         }
-        /* ▲▲▲ 横並び用スタイルを追加 ▲▲▲ */
+        
+        /* ソート用スタイル */
+        th a {
+            color: white;
+            text-decoration: none;
+            display: block;
+        }
+        th a:hover {
+            text-decoration: underline;
+        }
+        .sort-asc, .sort-desc {
+            font-size: 9px;
+            vertical-align: middle;
+        }
     </style>
 </head>
 
@@ -157,7 +224,6 @@ $years = $pdo->query("SELECT DISTINCT health_check_year FROM questionnaire_respo
 
         <div style="padding: 20px;">
             
-            <!-- ▼▼▼ フィルターフォーム ▼▼▼ -->
             <div class="filter-section">
                 <form method="GET" action="admin_dashboard.php">
                     <div class="filter-group">
@@ -171,7 +237,6 @@ $years = $pdo->query("SELECT DISTINCT health_check_year FROM questionnaire_respo
                         </div>
                     </div>
                     
-                    <!-- ▼▼▼ 横並びにするためのラッパー ▼▼▼ -->
                     <div class="filter-row">
                         <div class="filter-group">
                             <strong>年度</strong>
@@ -191,21 +256,15 @@ $years = $pdo->query("SELECT DISTINCT health_check_year FROM questionnaire_respo
                             </div>
                         </div>
                     </div>
-                    <!-- ▲▲▲ 横並びラッパーここまで ▲▲▲ -->
-
                     <div class="filter-buttons">
                         <button type="submit" class="btn btn-primary btn-small">絞り込み</button>
                         <a href="admin_dashboard.php" class="btn btn-secondary btn-small" style="text-decoration: none;">リセット</a>
                     </div>
                 </form>
             </div>
-            <!-- ▲▲▲ フィルターフォーム ▲▲▲ -->
-
             <div class="action-buttons">
-                <!-- ▼▼▼ エクスポートリンクにフィルター情報を追加 ▼▼▼ -->
                 <a href="export_csv.php<?php echo htmlspecialchars($export_query_string); ?>" class="btn btn-primary btn-small">CSV出力</a>
                 <a href="export_excel.php<?php echo htmlspecialchars($export_query_string); ?>" class="btn btn-primary btn-small">Excel出力</a>
-                <!-- ▲▲▲ エクスポートリンクにフィルター情報を追加 ▲▲▲ -->
                 <button onclick="window.print()" class="btn btn-secondary btn-small">印刷</button>
                 <a href="admin_manage.php" class="btn btn-primary btn-small">管理画面</a>
             </div>
@@ -218,45 +277,20 @@ $years = $pdo->query("SELECT DISTINCT health_check_year FROM questionnaire_respo
                 <table>
                     <thead>
                         <tr>
-                            <th>ID</th>
-                            <th>職員ID</th>
-                            <th>氏名</th>
-                            <th>部署</th>
-                            <th>施設名</th>
-                            <th>年度</th>
-                            <th>時期</th>
-                            <th>Q1</th>
-                            <th>Q1薬名</th>
-                            <th>Q2</th>
-                            <th>Q2薬名</th>
-                            <th>Q3</th>
-                            <th>Q3薬名</th>
-                            <th>Q4</th>
-                            <th>Q5</th>
-                            <th>Q6</th>
-                            <th>Q7</th>
-                            <th>Q8</th>
-                            <th>Q9</th>
-                            <th>Q10</th>
-                            <th>Q11</th>
-                            <th>Q12</th>
-                            <th>Q13</th>
-                            <th>Q14</th>
-                            <th>Q15</th>
-                            <th>Q16</th>
-                            <th>Q17</th>
-                            <th>Q18</th>
-                            <th>Q19</th>
-                            <th>Q20</th>
-                            <th>Q21</th>
-                            <th>Q22</th>
-                            <th>送信日時</th>
+                            <th><?php echo get_sort_link('response_id', 'ID', $sort_by, $sort_order, $query_string_params); ?></th>
+                            <th><?php echo get_sort_link('staff_id', '職員ID', $sort_by, $sort_order, $query_string_params); ?></th>
+                            <th><?php echo get_sort_link('facility_name', '施設名', $sort_by, $sort_order, $query_string_params); ?></th>
+                            <th><?php echo get_sort_link('health_check_year', '年度', $sort_by, $sort_order, $query_string_params); ?></th>
+                            <th><?php echo get_sort_link('health_check_season', '時期', $sort_by, $sort_order, $query_string_params); ?></th>
+                            <th><?php echo get_sort_link('department', '部署', $sort_by, $sort_order, $query_string_params); ?></th>
+                            <th><?php echo get_sort_link('staff_name', '氏名', $sort_by, $sort_order, $query_string_params); ?></th>
+                            <th><?php echo get_sort_link('submitted_at', '送信日時', $sort_by, $sort_order, $query_string_params); ?></th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if (empty($responses)): ?>
                         <tr>
-                            <td colspan="33" style="text-align: center; padding: 20px;">
+                            <td colspan="8" style="text-align: center; padding: 20px;">
                                 該当するデータがありません。
                             </td>
                         </tr>
@@ -265,36 +299,11 @@ $years = $pdo->query("SELECT DISTINCT health_check_year FROM questionnaire_respo
                         <tr>
                             <td><a href="admin_index.php?id=<?php echo htmlspecialchars($row['response_id']); ?>"><?php echo htmlspecialchars($row['response_id']); ?></a></td>
                             <td><?php echo htmlspecialchars($row['staff_id']); ?></td>
-                            <td><?php echo htmlspecialchars($row['staff_name']); ?></td>
-                            <td><?php echo htmlspecialchars($row['department']); ?></td>
                             <td><?php echo htmlspecialchars($row['facility_name']); ?></td>
-                            <td><?php echo htmlspecialchars($row['health_check_year']); ?></td>
+                             <td><?php echo htmlspecialchars($row['health_check_year']); ?></td>
                             <td><?php echo htmlspecialchars($row['health_check_season']); ?></td>
-                            <td><?php echo htmlspecialchars($row['q1_blood_pressure_med']); ?></td>
-                            <td><?php echo htmlspecialchars($row['q1_medicine_name']); ?></td>
-                            <td><?php echo htmlspecialchars($row['q2_insulin_med']); ?></td>
-                            <td><?php echo htmlspecialchars($row['q2_medicine_name']); ?></td>
-                            <td><?php echo htmlspecialchars($row['q3_cholesterol_med']); ?></td>
-                            <td><?php echo htmlspecialchars($row['q3_medicine_name']); ?></td>
-                            <td><?php echo htmlspecialchars($row['q4_stroke']); ?></td>
-                            <td><?php echo htmlspecialchars($row['q5_heart_disease']); ?></td>
-                            <td><?php echo htmlspecialchars($row['q6_kidney_failure']); ?></td>
-                            <td><?php echo htmlspecialchars($row['q7_anemia']); ?></td>
-                            <td><?php echo htmlspecialchars($row['q8_smoking']); ?></td>
-                            <td><?php echo htmlspecialchars($row['q9_weight_gain']); ?></td>
-                            <td><?php echo htmlspecialchars($row['q10_exercise']); ?></td>
-                            <td><?php echo htmlspecialchars($row['q11_walking']); ?></td>
-                            <td><?php echo htmlspecialchars($row['q12_walking_speed']); ?></td>
-                            <td><?php echo htmlspecialchars($row['q13_weight_change']); ?></td>
-                            <td><?php echo htmlspecialchars($row['q14_eating_speed']); ?></td>
-                            <td><?php echo htmlspecialchars($row['q15_dinner_before_bed']); ?></td>
-                            <td><?php echo htmlspecialchars($row['q16_snack_after_dinner']); ?></td>
-                            <td><?php echo htmlspecialchars($row['q17_skip_breakfast']); ?></td>
-                            <td><?php echo htmlspecialchars($row['q18_alcohol_frequency']); ?></td>
-                            <td><?php echo htmlspecialchars($row['q19_alcohol_amount']); ?></td>
-                            <td><?php echo htmlspecialchars($row['q20_sleep']); ?></td>
-                            <td><?php echo htmlspecialchars($row['q21_improvement_intention']); ?></td>
-                            <td><?php echo htmlspecialchars($row['q22_guidance_use']); ?></td>
+                             <td><?php echo htmlspecialchars($row['department']); ?></td>
+                            <td><?php echo htmlspecialchars($row['staff_name']); ?></td>
                             <td><?php echo htmlspecialchars($row['submitted_at']); ?></td>
                         </tr>
                         <?php endforeach; ?>
@@ -305,5 +314,3 @@ $years = $pdo->query("SELECT DISTINCT health_check_year FROM questionnaire_respo
     </div>
 </body>
 </html>
-
-
