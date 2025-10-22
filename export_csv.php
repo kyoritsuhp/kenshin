@@ -1,7 +1,3 @@
-<!--
-ファイル名称: export_csv.php
-生成日時: 2025-10-02
--->
 <?php
 session_start();
 
@@ -24,9 +20,38 @@ try {
     die("データベース接続エラー: " . $e->getMessage());
 }
 
-// データ取得
-$stmt = $pdo->query("SELECT * FROM questionnaire_responses ORDER BY submitted_at DESC");
+// --- フィルター処理 ---
+$facility_filter = $_GET['facility'] ?? 'all';
+$year_filter = $_GET['year'] ?? 'all';
+$season_filter = $_GET['season'] ?? 'all';
+
+$sql_base = "SELECT * FROM questionnaire_responses";
+$where_clauses = [];
+$params = [];
+
+if ($facility_filter !== 'all') {
+    $where_clauses[] = "facility_name = :facility_name";
+    $params[':facility_name'] = $facility_filter;
+}
+if ($year_filter !== 'all') {
+    $where_clauses[] = "health_check_year = :health_check_year";
+    $params[':health_check_year'] = $year_filter;
+}
+if ($season_filter !== 'all') {
+    $where_clauses[] = "health_check_season = :health_check_season";
+    $params[':health_check_season'] = $season_filter;
+}
+
+$sql = $sql_base;
+if (!empty($where_clauses)) {
+    $sql .= " WHERE " . implode(" AND ", $where_clauses);
+}
+$sql .= " ORDER BY submitted_at DESC";
+
+$stmt = $pdo->prepare($sql);
+$stmt->execute($params);
 $responses = $stmt->fetchAll(PDO::FETCH_ASSOC);
+// --- フィルター処理ここまで ---
 
 // CSV出力設定
 header('Content-Type: text/csv; charset=UTF-8');
@@ -44,9 +69,15 @@ $headers = [
     '職員ID',
     '氏名',
     '所属部署',
+    '施設名', // ★ 追加
+    '年度',   // ★ 追加
+    '時期',   // ★ 追加
     'Q1_血圧を下げる薬',
+    'Q1_薬名',
     'Q2_インスリン又は血糖を下げる薬',
+    'Q2_薬名',
     'Q3_コレステロールを下げる薬',
+    'Q3_薬名',
     'Q4_脳卒中',
     'Q5_心臓病',
     'Q6_慢性腎不全',
@@ -78,9 +109,15 @@ foreach ($responses as $row) {
         $row['staff_id'],
         $row['staff_name'],
         $row['department'],
+        $row['facility_name'], // ★ 追加
+        $row['health_check_year'], // ★ 追加
+        $row['health_check_season'], // ★ 追加
         $row['q1_blood_pressure_med'],
+        $row['q1_medicine_name'],
         $row['q2_insulin_med'],
+        $row['q2_medicine_name'],
         $row['q3_cholesterol_med'],
+        $row['q3_medicine_name'],
         $row['q4_stroke'],
         $row['q5_heart_disease'],
         $row['q6_kidney_failure'],
@@ -108,3 +145,4 @@ foreach ($responses as $row) {
 
 fclose($output);
 exit;
+

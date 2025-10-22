@@ -1,7 +1,3 @@
-<!--
-ファイル名称: export_excel.php
-生成日時: 2025-10-02
--->
 <?php
 session_start();
 
@@ -24,9 +20,38 @@ try {
     die("データベース接続エラー: " . $e->getMessage());
 }
 
-// データ取得
-$stmt = $pdo->query("SELECT * FROM questionnaire_responses ORDER BY submitted_at DESC");
+// --- フィルター処理 ---
+$facility_filter = $_GET['facility'] ?? 'all';
+$year_filter = $_GET['year'] ?? 'all';
+$season_filter = $_GET['season'] ?? 'all';
+
+$sql_base = "SELECT * FROM questionnaire_responses";
+$where_clauses = [];
+$params = [];
+
+if ($facility_filter !== 'all') {
+    $where_clauses[] = "facility_name = :facility_name";
+    $params[':facility_name'] = $facility_filter;
+}
+if ($year_filter !== 'all') {
+    $where_clauses[] = "health_check_year = :health_check_year";
+    $params[':health_check_year'] = $year_filter;
+}
+if ($season_filter !== 'all') {
+    $where_clauses[] = "health_check_season = :health_check_season";
+    $params[':health_check_season'] = $season_filter;
+}
+
+$sql = $sql_base;
+if (!empty($where_clauses)) {
+    $sql .= " WHERE " . implode(" AND ", $where_clauses);
+}
+$sql .= " ORDER BY submitted_at DESC";
+
+$stmt = $pdo->prepare($sql);
+$stmt->execute($params);
 $responses = $stmt->fetchAll(PDO::FETCH_ASSOC);
+// --- フィルター処理ここまで ---
 
 // Excel形式（HTML table）で出力
 header('Content-Type: application/vnd.ms-excel; charset=UTF-8');
@@ -53,9 +78,15 @@ echo "\xEF\xBB\xBF";
                 <th>職員ID</th>
                 <th>氏名</th>
                 <th>所属部署</th>
+                <th>施設名</th> <!-- ★ 追加 -->
+                <th>年度</th>   <!-- ★ 追加 -->
+                <th>時期</th>   <!-- ★ 追加 -->
                 <th>Q1_血圧を下げる薬</th>
+                <th>Q1_薬名</th>
                 <th>Q2_インスリン又は血糖を下げる薬</th>
+                <th>Q2_薬名</th>
                 <th>Q3_コレステロールを下げる薬</th>
+                <th>Q3_薬名</th>
                 <th>Q4_脳卒中</th>
                 <th>Q5_心臓病</th>
                 <th>Q6_慢性腎不全</th>
@@ -86,9 +117,15 @@ echo "\xEF\xBB\xBF";
                 <td><?php echo htmlspecialchars($row['staff_id']); ?></td>
                 <td><?php echo htmlspecialchars($row['staff_name']); ?></td>
                 <td><?php echo htmlspecialchars($row['department']); ?></td>
+                <td><?php echo htmlspecialchars($row['facility_name']); ?></td> <!-- ★ 追加 -->
+                <td><?php echo htmlspecialchars($row['health_check_year']); ?></td> <!-- ★ 追加 -->
+                <td><?php echo htmlspecialchars($row['health_check_season']); ?></td> <!-- ★ 追加 -->
                 <td><?php echo htmlspecialchars($row['q1_blood_pressure_med']); ?></td>
+                <td><?php echo htmlspecialchars($row['q1_medicine_name']); ?></td>
                 <td><?php echo htmlspecialchars($row['q2_insulin_med']); ?></td>
+                <td><?php echo htmlspecialchars($row['q2_medicine_name']); ?></td>
                 <td><?php echo htmlspecialchars($row['q3_cholesterol_med']); ?></td>
+                <td><?php echo htmlspecialchars($row['q3_medicine_name']); ?></td>
                 <td><?php echo htmlspecialchars($row['q4_stroke']); ?></td>
                 <td><?php echo htmlspecialchars($row['q5_heart_disease']); ?></td>
                 <td><?php echo htmlspecialchars($row['q6_kidney_failure']); ?></td>
@@ -116,3 +153,4 @@ echo "\xEF\xBB\xBF";
     </table>
 </body>
 </html>
+

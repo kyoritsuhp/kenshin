@@ -69,3 +69,11 @@ CREATE TABLE IF NOT EXISTS questionnaire_responses (
     INDEX idx_staff_id (staff_id),
     INDEX idx_submitted_at (submitted_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- 2025-10-22 追記: 施設名カラムを追加
+ALTER TABLE questionnaire_responses
+  ADD COLUMN facility_name VARCHAR(100) AFTER department;
+USE monshin;
+ALTER TABLE questionnaire_responses
+  ADD COLUMN health_check_year VARCHAR(4) AFTER department,
+  ADD COLUMN health_check_season VARCHAR(10) AFTER health_check_year;

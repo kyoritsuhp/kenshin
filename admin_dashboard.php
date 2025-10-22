@@ -20,9 +20,49 @@ try {
     die("データベース接続エラー: " . $e->getMessage());
 }
 
-// 全回答データ取得
-$stmt = $pdo->query("SELECT * FROM questionnaire_responses ORDER BY submitted_at DESC");
+// --- フィルター処理 ---
+$facility_filter = $_GET['facility'] ?? 'all';
+$year_filter = $_GET['year'] ?? 'all';
+$season_filter = $_GET['season'] ?? 'all';
+
+$sql_base = "SELECT * FROM questionnaire_responses";
+$where_clauses = [];
+$params = [];
+$query_string_params = []; // For export links
+
+if ($facility_filter !== 'all') {
+    $where_clauses[] = "facility_name = :facility_name";
+    $params[':facility_name'] = $facility_filter;
+    $query_string_params['facility'] = $facility_filter;
+}
+if ($year_filter !== 'all') {
+    $where_clauses[] = "health_check_year = :health_check_year";
+    $params[':health_check_year'] = $year_filter;
+    $query_string_params['year'] = $year_filter;
+}
+if ($season_filter !== 'all') {
+    $where_clauses[] = "health_check_season = :health_check_season";
+    $params[':health_check_season'] = $season_filter;
+    $query_string_params['season'] = $season_filter;
+}
+
+$sql = $sql_base;
+if (!empty($where_clauses)) {
+    $sql .= " WHERE " . implode(" AND ", $where_clauses);
+}
+$sql .= " ORDER BY submitted_at DESC";
+
+$stmt = $pdo->prepare($sql);
+$stmt->execute($params);
 $responses = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// エクスポート用のクエリ文字列
+$export_query_string = http_build_query($query_string_params);
+if (!empty($export_query_string)) {
+    $export_query_string = '?' . $export_query_string;
+}
+// --- フィルター処理ここまで ---
+
 
 // ログアウト処理
 if (isset($_GET['logout'])) {
@@ -30,6 +70,10 @@ if (isset($_GET['logout'])) {
     header('Location: admin.php');
     exit;
 }
+
+// フィルター用のユニークな値を取得
+$years = $pdo->query("SELECT DISTINCT health_check_year FROM questionnaire_responses ORDER BY health_check_year DESC")->fetchAll(PDO::FETCH_COLUMN);
+
 ?>
 <!DOCTYPE html>
 <html lang="ja">
@@ -38,6 +82,68 @@ if (isset($_GET['logout'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>管理者ダッシュボード</title>
     <link rel="stylesheet" href="style.css">
+    <!-- フィルタースタイルを追加 -->
+    <style>
+        .filter-section {
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+            border: 1px solid #dee2e6;
+        }
+        .filter-group strong {
+            display: block;
+            font-size: 12px;
+            margin-bottom: 5px;
+            color: #555;
+        }
+        .filter-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .filter-options label {
+            display: inline-flex;
+            align-items: center;
+            padding: 5px 10px;
+            background: #fff;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 11px;
+            font-weight: normal;
+        }
+        .filter-options label:hover {
+            background: #e9ecef;
+            border-color: #667eea;
+        }
+        .filter-options label input[type="radio"] {
+            margin-right: 5px;
+        }
+        .filter-options label:has(input[type="radio"]:checked) {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid #dee2e6;
+        }
+        /* ▼▼▼ 横並び用スタイルを追加 ▼▼▼ */
+        .filter-row {
+            display: flex;
+            gap: 20px; /* グループ間の隙間 */
+        }
+        .filter-row .filter-group {
+            flex: 1; /* 幅を均等に分割 */
+            min-width: 0; /* flexアイテムが縮小できるように */
+        }
+        /* ▲▲▲ 横並び用スタイルを追加 ▲▲▲ */
+    </style>
 </head>
 
 <body class="dashboard-page">
@@ -50,12 +156,63 @@ if (isset($_GET['logout'])) {
         </header>
 
         <div style="padding: 20px;">
+            
+            <!-- ▼▼▼ フィルターフォーム ▼▼▼ -->
+            <div class="filter-section">
+                <form method="GET" action="admin_dashboard.php">
+                    <div class="filter-group">
+                        <strong>施設名</strong>
+                        <div class="filter-options">
+                            <label><input type="radio" name="facility" value="all" <?php echo ($facility_filter == 'all') ? 'checked' : ''; ?>> すべて</label>
+                            <label><input type="radio" name="facility" value="協立病院" <?php echo ($facility_filter == '協立病院') ? 'checked' : ''; ?>> 協立病院</label>
+                            <label><input type="radio" name="facility" value="清寿園" <?php echo ($facility_filter == '清寿園') ? 'checked' : ''; ?>> 清寿園</label>
+                            <label><input type="radio" name="facility" value="かがやき" <?php echo ($facility_filter == 'かがやき') ? 'checked' : ''; ?>> かがやき</label>
+                            <label><input type="radio" name="facility" value="かがやき2号館" <?php echo ($facility_filter == 'かがやき2号館') ? 'checked' : ''; ?>> かがやき2号館</label>
+                        </div>
+                    </div>
+                    
+                    <!-- ▼▼▼ 横並びにするためのラッパー ▼▼▼ -->
+                    <div class="filter-row">
+                        <div class="filter-group">
+                            <strong>年度</strong>
+                            <div class="filter-options">
+                                <label><input type="radio" name="year" value="all" <?php echo ($year_filter == 'all') ? 'checked' : ''; ?>> すべて</label>
+                                <?php foreach ($years as $year): ?>
+                                <label><input type="radio" name="year" value="<?php echo htmlspecialchars($year); ?>" <?php echo ($year_filter == $year) ? 'checked' : ''; ?>> <?php echo htmlspecialchars($year); ?>年</label>
+                                <?php endforeach; ?>
+                            </div>
+                        </div>
+                        <div class="filter-group">
+                            <strong>時期</strong>
+                            <div class="filter-options">
+                                <label><input type="radio" name="season" value="all" <?php echo ($season_filter == 'all') ? 'checked' : ''; ?>> すべて</label>
+                                <label><input type="radio" name="season" value="春" <?php echo ($season_filter == '春') ? 'checked' : ''; ?>> 春</label>
+                                <label><input type="radio" name="season" value="冬" <?php echo ($season_filter == '冬') ? 'checked' : ''; ?>> 冬</label>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- ▲▲▲ 横並びラッパーここまで ▲▲▲ -->
+
+                    <div class="filter-buttons">
+                        <button type="submit" class="btn btn-primary btn-small">絞り込み</button>
+                        <a href="admin_dashboard.php" class="btn btn-secondary btn-small" style="text-decoration: none;">リセット</a>
+                    </div>
+                </form>
+            </div>
+            <!-- ▲▲▲ フィルターフォーム ▲▲▲ -->
+
             <div class="action-buttons">
-                <a href="export_csv.php" class="btn btn-primary btn-small">CSV出力</a>
-                <a href="export_excel.php" class="btn btn-primary btn-small">Excel出力</a>
+                <!-- ▼▼▼ エクスポートリンクにフィルター情報を追加 ▼▼▼ -->
+                <a href="export_csv.php<?php echo htmlspecialchars($export_query_string); ?>" class="btn btn-primary btn-small">CSV出力</a>
+                <a href="export_excel.php<?php echo htmlspecialchars($export_query_string); ?>" class="btn btn-primary btn-small">Excel出力</a>
+                <!-- ▲▲▲ エクスポートリンクにフィルター情報を追加 ▲▲▲ -->
                 <button onclick="window.print()" class="btn btn-secondary btn-small">印刷</button>
                 <a href="admin_manage.php" class="btn btn-primary btn-small">管理画面</a>
             </div>
+
+            <p style="margin-bottom: 10px; font-size: 12px; font-weight: 600;">
+                表示件数: <?php echo count($responses); ?>件
+            </p>
 
             <div class="table-container">
                 <table>
@@ -65,6 +222,7 @@ if (isset($_GET['logout'])) {
                             <th>職員ID</th>
                             <th>氏名</th>
                             <th>部署</th>
+                            <th>施設名</th>
                             <th>年度</th>
                             <th>時期</th>
                             <th>Q1</th>
@@ -96,12 +254,20 @@ if (isset($_GET['logout'])) {
                         </tr>
                     </thead>
                     <tbody>
+                        <?php if (empty($responses)): ?>
+                        <tr>
+                            <td colspan="33" style="text-align: center; padding: 20px;">
+                                該当するデータがありません。
+                            </td>
+                        </tr>
+                        <?php endif; ?>
                         <?php foreach ($responses as $row): ?>
                         <tr>
                             <td><a href="admin_index.php?id=<?php echo htmlspecialchars($row['response_id']); ?>"><?php echo htmlspecialchars($row['response_id']); ?></a></td>
                             <td><?php echo htmlspecialchars($row['staff_id']); ?></td>
                             <td><?php echo htmlspecialchars($row['staff_name']); ?></td>
                             <td><?php echo htmlspecialchars($row['department']); ?></td>
+                            <td><?php echo htmlspecialchars($row['facility_name']); ?></td>
                             <td><?php echo htmlspecialchars($row['health_check_year']); ?></td>
                             <td><?php echo htmlspecialchars($row['health_check_season']); ?></td>
                             <td><?php echo htmlspecialchars($row['q1_blood_pressure_med']); ?></td>
@@ -139,3 +305,5 @@ if (isset($_GET['logout'])) {
     </div>
 </body>
 </html>
+
+

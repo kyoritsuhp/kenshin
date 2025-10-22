@@ -16,9 +16,10 @@ body {
     font-family: 'Segoe UI', 'Hiragino Sans', 'Meiryo', sans-serif;
     font-size: 11px;
     line-height: 1.4;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: #FFFFFF; /* グラデーションから白に変更 */
     min-height: 100vh;
-    padding: 10px;
+    padding: 50px 10px; /* 10pxから変更 (上下の余白を確保) */
+    overflow-x: hidden; /* スケールによる横スクロールを防止 */
 }
 
 .container {
@@ -28,6 +29,11 @@ body {
     border-radius: 8px;
     box-shadow: 0 10px 40px rgba(0,0,0,0.2);
     overflow: hidden;
+    
+    /* --- 125%に拡大 --- */
+    transform: scale(1.25);
+    transform-origin: top center;
+    /* --- ここまで --- */
 }
 
 .header {
@@ -393,7 +399,10 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    /* ▼ 背景はここでグラデーションを再指定（bodyが白になったため）*/
+    background: #FFFFFF;
+    /* ▼ 100vhからpaddingを引く */
+    min-height: calc(100vh - 100px);
 }
 
 .login-box {
@@ -404,6 +413,11 @@ body {
     width: 100%;
     max-width: 400px;
     text-align: center;
+
+    /* --- 125%に拡大 (追加) --- */
+    transform: scale(1.25);
+    transform-origin: center center;
+    /* --- ここまで --- */
 }
 
 .login-box h2 {
@@ -558,4 +572,196 @@ table tr:hover {
 
 .back-to-form-btn:hover {
     background: rgba(255,255,255,0.3);
+}
+/* ===============================================
+   マルチステップフォーム (index.php) 用スタイル
+   =============================================== */
+
+/* ページ */
+.form-page {
+    display: none;
+    padding: 10px;
+    animation: fadeIn 0.4s ease-in-out;
+}
+
+.form-page.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* 進行状況バー */
+.progress-container {
+    padding: 20px 25px 15px 25px;
+    background: #f8f9fa;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.progress-steps {
+    display: flex;
+    justify-content: space-between;
+    font-size: 10px;
+    color: #aaa;
+    margin-bottom: 5px;
+}
+
+.progress-step {
+    text-align: center;
+    flex-basis: 0;
+    flex-grow: 1;
+}
+
+.progress-step.active {
+    color: #667eea;
+    font-weight: 600;
+}
+
+.progress-step.completed {
+    color: #28a745;
+}
+
+.progress-bar {
+    width: 0%; /* JSで制御 */
+    height: 6px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 3px;
+    transition: width 0.4s ease-in-out;
+}
+
+
+/* ナビゲーションボタン */
+.navigation-buttons {
+    display: flex;
+    justify-content: space-between;
+    padding: 15px 20px;
+    border-top: 2px solid #dee2e6;
+    background: #fdfdfd;
+}
+
+.navigation-buttons button {
+    display: none; /* JSで表示制御 */
+    min-width: 100px;
+    justify-content: center;
+}
+
+.navigation-buttons button.visible {
+    display: inline-flex;
+}
+
+/* ページ8: 確認画面のスタイル */
+#confirmationReview ul {
+    list-style: none;
+    padding: 0;
+    margin: 15px 0 0 0;
+}
+
+#confirmationReview li {
+    padding: 10px 8px;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 12px;
+    line-height: 1.5;
+    display: flex;
+    justify-content: space-between;
+}
+
+#confirmationReview li:nth-child(even) {
+    background: #f8f9fa;
+}
+
+#confirmationReview li:last-child {
+    border-bottom: none;
+}
+
+#confirmationReview li strong {
+    color: #667eea;
+    font-size: 11px;
+    flex-shrink: 0;
+    margin-right: 15px;
+}
+
+/* 必須項目のバリデーションエラー時のスタイル */
+input:invalid, select:invalid, textarea:invalid {
+    border-color: #dc3545;
+}
+input:invalid:focus, select:invalid:focus, textarea:invalid:focus {
+    box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.2);
+}
+
+/* 必須ラジオボタンの親をハイライト */
+.question:has(input[type="radio"][required]:invalid) > label {
+    color: #dc3545;
+}
+
+/* admin.php のログインアイコン用 */
+.login-icon {
+    width: 1.5em; /* 文字のサイズ(1em)に合わせる */
+    height: 1.5em; /* 文字のサイズ(1em)に合わせる */
+    vertical-align: -0.15em; /* 文字との高さを微調整 */
+    margin-right: 2px; /* アイコンと文字の間隔 */
+}
+
+/* ログインボタン */
+.btn-icon-login {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    background-color: currentColor; 
+    margin-right: 2px;
+    vertical-align: -0.15em; 
+
+    mask-image: url(/img/common_login.svg);
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    
+    -webkit-mask-image: url(/img/common_login.svg);
+    -webkit-mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+
+}
+
+/* 問診票入力画面に戻る　矢印 */
+.btn-icon-back {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    background-color: currentColor; 
+    margin-right: 1px;
+    vertical-align: -0.15em;
+    
+    mask-image: url(/img/common_arrow-left.svg);
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    
+    -webkit-mask-image: url(/img/common_arrow-left.svg);
+    -webkit-mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+
+}
+
+/* index.php 送信ボタン（紙飛行機）アイコン */
+.btn-icon-plane {
+    display: inline-block;
+    width: 1.5em; /* ボタンのフォントサイズ(1em)に合わせる */
+    height: 1.5em;
+    background-color: currentColor; /* ボタンの文字色(color)を使用する */
+    margin-right: 1px; /* アイコンと文字の間隔 */
+    vertical-align: -0.15em; /* 文字との高さを微調整 */
+    
+    /* ユーザー指定のSVGファイルを指定 (パスを環境に合わせてください) */
+    mask-image: url(/img/kenshin_plane.svg);
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    
+    -webkit-mask-image: url(/img/kenshin_plane.svg);
+    -webkit-mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
 }

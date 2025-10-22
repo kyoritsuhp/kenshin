@@ -30,6 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $staff_id = trim($_POST['staff_id'] ?? '');
     $staff_name = trim($_POST['staff_name'] ?? '');
     $department = trim($_POST['department'] ?? '');
+    $facility_name = trim($_POST['facility_name'] ?? ''); // ★ 追加
 
     // デフォルト設定が有効な場合は、POSTされた値ではなく設定値を使用
     if ($isFixed) {
@@ -45,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         try {
             $sql = "INSERT INTO questionnaire_responses (
-                staff_id, staff_name, department, health_check_year, health_check_season,
+                staff_id, staff_name, department, facility_name, health_check_year, health_check_season,
                 q1_blood_pressure_med, q1_medicine_name,
                 q2_insulin_med, q2_medicine_name,
                 q3_cholesterol_med, q3_medicine_name,
@@ -56,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 q18_alcohol_frequency, q19_alcohol_amount, q20_sleep,
                 q21_improvement_intention, q22_guidance_use
             ) VALUES (
-                :staff_id, :staff_name, :department, :health_check_year, :health_check_season,
+                :staff_id, :staff_name, :department, :facility_name, :health_check_year, :health_check_season,
                 :q1, :q1_medicine_name,
                 :q2, :q2_medicine_name,
                 :q3, :q3_medicine_name,
@@ -69,6 +70,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 ':staff_id' => $staff_id,
                 ':staff_name' => $staff_name,
                 ':department' => $department,
+                ':facility_name' => $facility_name, // ★ 追加
                 ':health_check_year' => $health_check_year,
                 ':health_check_season' => $health_check_season,
                 ':q1' => $_POST['q1'] ?? null,
@@ -124,6 +126,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </header>
 
+        <div class="progress-container">
+            <div class="progress-bar" id="progressBar"></div>
+            <div class="progress-steps">
+                <span class="progress-step active" data-step="1">職員情報</span>
+                <span class="progress-step" data-step="2">服薬</span>
+                <span class="progress-step" data-step="3">既往歴</span>
+                <span class="progress-step" data-step="4">生活習慣</span>
+                <span class="progress-step" data-step="5">食生活</span>
+                <span class="progress-step" data-step="6">飲酒・睡眠</span>
+                <span class="progress-step" data-step="7">改善意欲</span>
+                <span class="progress-step" data-step="8">確認</span>
+            </div>
+        </div>
+
         <?php if ($message): ?>
             <div class="message success"><?php echo htmlspecialchars($message); ?></div>
         <?php endif; ?>
@@ -132,289 +148,305 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div class="message error"><?php echo htmlspecialchars($error); ?></div>
         <?php endif; ?>
 
-        <form method="POST" action="" class="questionnaire-form" id="questionnaireForm">
-            <div class="section">
-                <h2>健康診断情報</h2>
-                <?php if ($isFixed): ?>
-                    <div class="form-group">
-                        <label>年度・時期</label>
-                        <div class="radio-group">
-                             <label>
-                                <input type="radio" name="health_check_year" value="<?php echo htmlspecialchars($defaults['year'] ?? ''); ?>" checked disabled>
-                                <?php echo htmlspecialchars($defaults['year'] ?? ''); ?>年
-                            </label>
-                            <label>
-                                <input type="radio" name="health_check_season" value="<?php echo htmlspecialchars($defaults['season'] ?? ''); ?>" checked disabled>
-                                <?php echo htmlspecialchars($defaults['season'] ?? ''); ?>
-                            </label>
-                        </div>
-                    </div>
-                <?php else: ?>
-                    <div class="form-group">
-                        <label>年度 <span class="required">*必須</span></label>
-                        <div class="radio-group">
-                            <?php for ($y = 2025; $y <= 2030; $y++): ?>
-                                <label>
-                                    <input type="radio" name="health_check_year" value="<?php echo $y; ?>" required>
-                                    <?php echo $y; ?>年
+        <?php if (!$message): // 送信完了時はフォームを非表示 ?>
+        <form method="POST" action="" class="questionnaire-form" id="questionnaireForm" novalidate>
+            
+            <div class="form-page active" data-page="1">
+                <div class="section">
+                    <h2>健康診断情報</h2>
+                    <?php if ($isFixed): ?>
+                        <div class="form-group">
+                            <label>年度・時期</label>
+                            <div class="radio-group">
+                                 <label>
+                                    <input type="radio" name="health_check_year" value="<?php echo htmlspecialchars($defaults['year'] ?? ''); ?>" checked disabled>
+                                    <?php echo htmlspecialchars($defaults['year'] ?? ''); ?>年
                                 </label>
-                            <?php endfor; ?>
+                                <label>
+                                    <input type="radio" name="health_check_season" value="<?php echo htmlspecialchars($defaults['season'] ?? ''); ?>" checked disabled>
+                                    <?php echo htmlspecialchars($defaults['season'] ?? ''); ?>
+                                </label>
+                            </div>
+                        </div>
+                    <?php else: ?>
+                        <div class="form-group">
+                            <label>年度 </label>
+                            <div class="radio-group">
+                                <?php for ($y = 2025; $y <= 2030; $y++): ?>
+                                    <label>
+                                        <input type="radio" name="health_check_year" value="<?php echo $y; ?>" required>
+                                        <?php echo $y; ?>年
+                                    </label>
+                                <?php endfor; ?>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>時期 </label>
+                            <div class="radio-group">
+                                <label>
+                                    <input type="radio" name="health_check_season" value="春" required> 春
+                                </label>
+                                <label>
+                                    <input type="radio" name="health_check_season" value="冬" required> 冬
+                                </label>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+                </div>
+                <div class="section">
+                    <h2>職員情報</h2>
+                    <div class="form-group">
+                        <label>施設名 </label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="facility_name" value="協立病院" required> 協立病院</label>
+                            <label><input type="radio" name="facility_name" value="清寿園" required> 清寿園</label>
+                            <label><input type="radio" name="facility_name" value="かがやき" required> かがやき</label>
+                            <label><input type="radio" name="facility_name" value="かがやき2号館" required> かがやき2号館</label>
                         </div>
                     </div>
                     <div class="form-group">
-                        <label>時期 <span class="required">*必須</span></label>
+                        <label for="staff_id">職員ID </label>
+                        <input type="text" id="staff_id" name="staff_id" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="staff_name">氏名</label>
+                        <input type="text" id="staff_name" name="staff_name">
+                    </div>
+                    <div class="form-group">
+                        <label for="department">所属部署</label>
+                        <input type="text" id="department" name="department">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-page" data-page="2">
+                <div class="section">
+                    <h2>服薬状況</h2>
+                    <div class="question">
+                        <label>1. a. 血圧を下げる薬 </label>
                         <div class="radio-group">
-                            <label>
-                                <input type="radio" name="health_check_season" value="春" required> 春
-                            </label>
-                            <label>
-                                <input type="radio" name="health_check_season" value="冬"> 冬
-                            </label>
+                            <label><input type="radio" name="q1" value="1" required> はい</label>
+                            <label><input type="radio" name="q1" value="2" required> いいえ</label>
+                        </div>
+                        <div class="form-group" id="q1_medicine_name_group" style="display: none; margin-top: 10px;">
+                            <label for="q1_medicine_name" style="font-weight: normal;">もし「はい」の場合、お薬名を具体的に入力してください。</label>
+                            <input type="text" id="q1_medicine_name" name="q1_medicine_name" placeholder="例：アムロジピン">
                         </div>
                     </div>
-                <?php endif; ?>
-            </div>
-
-            <div class="section">
-                <h2>職員情報</h2>
-                <div class="form-group">
-                    <label for="staff_id">職員ID <span class="required">*必須</span></label>
-                    <input type="text" id="staff_id" name="staff_id" required>
-                </div>
-                <div class="form-group">
-                    <label for="staff_name">氏名</label>
-                    <input type="text" id="staff_name" name="staff_name">
-                </div>
-                <div class="form-group">
-                    <label for="department">所属部署</label>
-                    <input type="text" id="department" name="department">
-                </div>
-            </div>
-
-            <div class="section">
-                <h2>服薬状況</h2>
-                <div class="question">
-                    <label>1. a. 血圧を下げる薬</label>
-                    <div class="radio-group">
-                        <label><input type="radio" name="q1" value="1" required> はい</label>
-                        <label><input type="radio" name="q1" value="2"> いいえ</label>
+                    <div class="question">
+                        <label>2. b. インスリン注射又は血糖を下げる薬 </label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="q2" value="1" required> はい</label>
+                            <label><input type="radio" name="q2" value="2" required> いいえ</label>
+                        </div>
+                        <div class="form-group" id="q2_medicine_name_group" style="display: none; margin-top: 10px;">
+                            <label for="q2_medicine_name" style="font-weight: normal;">もし「はい」の場合、お薬名を具体的に入力してください。</label>
+                            <input type="text" id="q2_medicine_name" name="q2_medicine_name" placeholder="例：メトホルミン">
+                        </div>
                     </div>
-                    <div class="form-group" id="q1_medicine_name_group" style="display: none; margin-top: 10px;">
-                        <label for="q1_medicine_name" style="font-weight: normal;">もし「はい」の場合、お薬名を具体的に入力してください。</label>
-                        <input type="text" id="q1_medicine_name" name="q1_medicine_name" placeholder="例：アムロジピン">
-                    </div>
-                </div>
-                <div class="question">
-                    <label>2. b. インスリン注射又は血糖を下げる薬</label>
-                    <div class="radio-group">
-                        <label><input type="radio" name="q2" value="1" required> はい</label>
-                        <label><input type="radio" name="q2" value="2"> いいえ</label>
-                    </div>
-                    <div class="form-group" id="q2_medicine_name_group" style="display: none; margin-top: 10px;">
-                        <label for="q2_medicine_name" style="font-weight: normal;">もし「はい」の場合、お薬名を具体的に入力してください。</label>
-                        <input type="text" id="q2_medicine_name" name="q2_medicine_name" placeholder="例：メトホルミン">
-                    </div>
-                </div>
-                <div class="question">
-                    <label>3. c. コレステロールを下げる薬</label>
-                    <div class="radio-group">
-                        <label><input type="radio" name="q3" value="1" required> はい</label>
-                        <label><input type="radio" name="q3" value="2"> いいえ</label>
-                    </div>
-                    <div class="form-group" id="q3_medicine_name_group" style="display: none; margin-top: 10px;">
-                        <label for="q3_medicine_name" style="font-weight: normal;">もし「はい」の場合、お薬名を具体的に入力してください。</label>
-                        <input type="text" id="q3_medicine_name" name="q3_medicine_name" placeholder="例：ロスバスタチン">
+                    <div class="question">
+                        <label>3. c. コレステロールを下げる薬 </label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="q3" value="1" required> はい</label>
+                            <label><input type="radio" name="q3" value="2" required> いいえ</label>
+                        </div>
+                        <div class="form-group" id="q3_medicine_name_group" style="display: none; margin-top: 10px;">
+                            <label for="q3_medicine_name" style="font-weight: normal;">もし「はい」の場合、お薬名を具体的に入力してください。</label>
+                            <input type="text" id="q3_medicine_name" name="q3_medicine_name" placeholder="例：ロスバスタチン">
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="section">
-                <h2>既往歴</h2>
-                <div class="question">
-                    <label>4. 医師から、脳卒中（脳出血、脳梗塞等）にかかっているといわれたり、治療を受けたことがありますか。</label>
-                    <div class="radio-group">
-                        <label><input type="radio" name="q4" value="1" required> はい</label>
-                        <label><input type="radio" name="q4" value="2"> いいえ</label>
+            <div class="form-page" data-page="3">
+                 <div class="section">
+                    <h2>既往歴</h2>
+                    <div class="question">
+                        <label>4. 医師から、脳卒中（脳出血、脳梗塞等）にかかっているといわれたり、治療を受けたことがありますか。 </label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="q4" value="1" required> はい</label>
+                            <label><input type="radio" name="q4" value="2" required> いいえ</label>
+                        </div>
                     </div>
-                </div>
-                <div class="question">
-                    <label>5. 医師から、心臓病（狭心症、心筋梗塞等）にかかっているといわれたり、治療を受けたことがありますか。</label>
-                    <div class="radio-group">
-                        <label><input type="radio" name="q5" value="1" required> はい</label>
-                        <label><input type="radio" name="q5" value="2"> いいえ</label>
+                    <div class="question">
+                        <label>5. 医師から、心臓病（狭心症、心筋梗塞等）にかかっているといわれたり、治療を受けたことがありますか。 </label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="q5" value="1" required> はい</label>
+                            <label><input type="radio" name="q5" value="2" required> いいえ</label>
+                        </div>
                     </div>
-                </div>
-                <div class="question">
-                    <label>6. 医師から、慢性の腎不全にかかっているといわれたり、治療（人工透析）を受けたことがありますか。</label>
-                    <div class="radio-group">
-                        <label><input type="radio" name="q6" value="1" required> はい</label>
-                        <label><input type="radio" name="q6" value="2"> いいえ</label>
+                    <div class="question">
+                        <label>6. 医師から、慢性の腎不全にかかっているといわれたり、治療（人工透析）を受けたことがありますか。 </label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="q6" value="1" required> はい</label>
+                            <label><input type="radio" name="q6" value="2" required> いいえ</label>
+                        </div>
                     </div>
-                </div>
-                <div class="question">
-                    <label>7. 医師から、貧血といわれたことがある。</label>
-                    <div class="radio-group">
-                        <label><input type="radio" name="q7" value="1" required> はい</label>
-                        <label><input type="radio" name="q7" value="2"> いいえ</label>
-                    </div>
-                </div>
-            </div>
-
-            <div class="section">
-                <h2>生活習慣</h2>
-                <div class="question">
-                    <label>8. 現在、たばこを習慣的に吸っている。<br><span class="note">（※「現在、習慣的に喫煙している者」とは、「合計100本以上、又は6ヶ月以上吸っている者」であり、最近1ヶ月間も吸っている者）</span></label>
-                    <div class="radio-group">
-                        <label><input type="radio" name="q8" value="1" required> はい</label>
-                        <label><input type="radio" name="q8" value="2"> いいえ</label>
-                    </div>
-                </div>
-                <div class="question">
-                    <label>9. 20歳の時の体重から10kg以上増加している。</label>
-                    <div class="radio-group">
-                        <label><input type="radio" name="q9" value="1" required> はい</label>
-                        <label><input type="radio" name="q9" value="2"> いいえ</label>
-                    </div>
-                </div>
-                <div class="question">
-                    <label>10. 1回30分以上の軽く汗をかく運動を週2日以上、1年以上実施</label>
-                    <div class="radio-group">
-                        <label><input type="radio" name="q10" value="1" required> はい</label>
-                        <label><input type="radio" name="q10" value="2"> いいえ</label>
-                    </div>
-                </div>
-                <div class="question">
-                    <label>11. 日常生活において歩行又は同等の身体活動を1日1時間以上実施</label>
-                    <div class="radio-group">
-                        <label><input type="radio" name="q11" value="1" required> はい</label>
-                        <label><input type="radio" name="q11" value="2"> いいえ</label>
-                    </div>
-                </div>
-                <div class="question">
-                    <label>12. ほぼ同じ年齢の同性と比較して歩く速度が速い。</label>
-                    <div class="radio-group">
-                        <label><input type="radio" name="q12" value="1" required> はい</label>
-                        <label><input type="radio" name="q12" value="2"> いいえ</label>
-                    </div>
-                </div>
-                <div class="question">
-                    <label>13. この1年間で体重の増減が±3kg以上あった。</label>
-                    <div class="radio-group">
-                        <label><input type="radio" name="q13" value="1" required> はい</label>
-                        <label><input type="radio" name="q13" value="2"> いいえ</label>
+                    <div class="question">
+                        <label>7. 医師から、貧血といわれたことがある。 </label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="q7" value="1" required> はい</label>
+                            <label><input type="radio" name="q7" value="2" required> いいえ</label>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="section">
-                <h2>食生活</h2>
-                <div class="question">
-                    <label>14. 人と比較して食べる速度が速い。</label>
-                    <div class="radio-group">
-                        <label><input type="radio" name="q14" value="1" required> 速い</label>
-                        <label><input type="radio" name="q14" value="2"> ふつう</label>
-                        <label><input type="radio" name="q14" value="3"> 遅い</label>
+            <div class="form-page" data-page="4">
+                <div class="section">
+                    <h2>生活習慣</h2>
+                    <div class="question">
+                        <label>8. 現在、たばこを習慣的に吸っている。<br><span class="note">（※「現在、習慣的に喫煙している者」とは、「合計100本以上、又は6ヶ月以上吸っている者」であり、最近1ヶ月間も吸っている者）</span> </label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="q8" value="1" required> はい</label>
+                            <label><input type="radio" name="q8" value="2" required> いいえ</label>
+                        </div>
                     </div>
-                </div>
-                <div class="question">
-                    <label>15. 就寝前の2時間以内に夕食をとることが週に3回以上ある。</label>
-                    <div class="radio-group">
-                        <label><input type="radio" name="q15" value="1" required> はい</label>
-                        <label><input type="radio" name="q15" value="2"> いいえ</label>
+                    <div class="question">
+                        <label>9. 20歳の時の体重から10kg以上増加している。 </label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="q9" value="1" required> はい</label>
+                            <label><input type="radio" name="q9" value="2" required> いいえ</label>
+                        </div>
                     </div>
-                </div>
-                <div class="question">
-                    <label>16. 夕食後に間食（3食以外の夜食）をとることが週に3回以上ある。</label>
-                    <div class="radio-group">
-                        <label><input type="radio" name="q16" value="1" required> はい</label>
-                        <label><input type="radio" name="q16" value="2"> いいえ</label>
+                    <div class="question">
+                        <label>10. 1回30分以上の軽く汗をかく運動を週2日以上、1年以上実施 </label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="q10" value="1" required> はい</label>
+                            <label><input type="radio" name="q10" value="2" required> いいえ</label>
+                        </div>
                     </div>
-                </div>
-                <div class="question">
-                    <label>17. 朝食を抜くことが週に3回以上ある。</label>
-                    <div class="radio-group">
-                        <label><input type="radio" name="q17" value="1" required> はい</label>
-                        <label><input type="radio" name="q17" value="2"> いいえ</label>
+                    <div class="question">
+                        <label>11. 日常生活において歩行又は同等の身体活動を1日1時間以上実施 </label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="q11" value="1" required> はい</label>
+                            <label><input type="radio" name="q11" value="2" required> いいえ</label>
+                        </div>
                     </div>
-                </div>
-            </div>
-
-            <div class="section">
-                <h2>飲酒</h2>
-                <div class="question">
-                    <label>18. お酒（清酒、焼酎、ビール、洋酒など）を飲む頻度</label>
-                    <div class="radio-group">
-                        <label><input type="radio" name="q18" value="1" required> 毎日</label>
-                        <label><input type="radio" name="q18" value="2"> 時々</label>
-                        <label><input type="radio" name="q18" value="3"> ほとんど飲まない（飲めない）</label>
+                    <div class="question">
+                        <label>12. ほぼ同じ年齢の同性と比較して歩く速度が速い。 </label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="q12" value="1" required> はい</label>
+                            <label><input type="radio" name="q12" value="2" required> いいえ</label>
+                        </div>
                     </div>
-                </div>
-                <div class="question">
-                    <label>19. 飲酒日の1日当たりの飲酒量<br><span class="note">清酒1合(180ml)の目安: ビール中瓶1本(約500ml)、焼酎35度(80ml)、ウイスキーダブル一杯(60ml)、ワイン2杯(240ml)</span></label>
-                    <div class="radio-group">
-                        <label><input type="radio" name="q19" value="1" required> 1合未満</label>
-                        <label><input type="radio" name="q19" value="2"> 1~2合未満</label>
-                        <label><input type="radio" name="q19" value="3"> 2~3合未満</label>
-                        <label><input type="radio" name="q19" value="4"> 3合以上</label>
+                    <div class="question">
+                        <label>13. この1年間で体重の増減が±3kg以上あった。 </label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="q13" value="1" required> はい</label>
+                            <label><input type="radio" name="q13" value="2" required> いいえ</label>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="section">
-                <h2>睡眠</h2>
-                <div class="question">
-                    <label>20. 睡眠で休養が十分とれている。</label>
-                    <div class="radio-group">
-                        <label><input type="radio" name="q20" value="1" required> はい</label>
-                        <label><input type="radio" name="q20" value="2"> いいえ</label>
+            <div class="form-page" data-page="5">
+                <div class="section">
+                    <h2>食生活</h2>
+                    <div class="question">
+                        <label>14. 人と比較して食べる速度が速い。 </label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="q14" value="1" required> 速い</label>
+                            <label><input type="radio" name="q14" value="2" required> ふつう</label>
+                            <label><input type="radio" name="q14" value="3" required> 遅い</label>
+                        </div>
+                    </div>
+                    <div class="question">
+                        <label>15. 就寝前の2時間以内に夕食をとることが週に3回以上ある。 </label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="q15" value="1" required> はい</label>
+                            <label><input type="radio" name="q15" value="2" required> いいえ</label>
+                        </div>
+                    </div>
+                    <div class="question">
+                        <label>16. 夕食後に間食（3食以外の夜食）をとることが週に3回以上ある。 </label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="q16" value="1" required> はい</label>
+                            <label><input type="radio" name="q16" value="2" required> いいえ</label>
+                        </div>
+                    </div>
+                    <div class="question">
+                        <label>17. 朝食を抜くことが週に3回以上ある。 </label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="q17" value="1" required> はい</label>
+                            <label><input type="radio" name="q17" value="2" required> いいえ</label>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="section">
-                <h2>生活習慣改善について</h2>
-                <div class="question">
-                    <label>21. 運動や食生活等の生活習慣を改善してみようと思いますか。</label>
-                    <div class="radio-group vertical">
-                        <label><input type="radio" name="q21" value="1" required> ① 改善するつもりはない</label>
-                        <label><input type="radio" name="q21" value="2"> ② 改善するつもりである（概ね6か月以内）</label>
-                        <label><input type="radio" name="q21" value="3"> ③ 近いうちに（概ね1か月以内）改善するつもりであり、少しずつ始めている</label>
-                        <label><input type="radio" name="q21" value="4"> ④ 既に改善に取り組んでいる（6か月未満）</label>
-                        <label><input type="radio" name="q21" value="5"> ⑤ 既に改善に取り組んでいる（6か月以上）</label>
+            <div class="form-page" data-page="6">
+                <div class="section">
+                    <h2>飲酒</h2>
+                    <div class="question">
+                        <label>18. お酒（清酒、焼酎、ビール、洋酒など）を飲む頻度 </label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="q18" value="1" required> 毎日</label>
+                            <label><input type="radio" name="q18" value="2" required> 時々</label>
+                            <label><input type="radio" name="q18" value="3" required> ほとんど飲まない（飲めない）</label>
+                        </div>
+                    </div>
+                    <div class="question">
+                        <label>19. 飲酒日の1日当たりの飲酒量<br><span class="note">清酒1合(180ml)の目安: ビール中瓶1本(約500ml)、焼酎35度(80ml)、ウイスキーダブル一杯(60ml)、ワイン2杯(240ml)</span> </label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="q19" value="1" required> 1合未満</label>
+                            <label><input type="radio" name="q19" value="2" required> 1~2合未満</label>
+                            <label><input type="radio" name="q19" value="3" required> 2~3合未満</label>
+                            <label><input type="radio" name="q19" value="4" required> 3合以上</label>
+                        </div>
                     </div>
                 </div>
-                <div class="question">
-                    <label>22. 生活習慣の改善について保健指導を受ける機会があれば、利用しますか。</label>
-                    <div class="radio-group">
-                        <label><input type="radio" name="q22" value="1" required> はい</label>
-                        <label><input type="radio" name="q22" value="2"> いいえ</label>
+                <div class="section">
+                    <h2>睡眠</h2>
+                    <div class="question">
+                        <label>20. 睡眠で休養が十分とれている。 </label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="q20" value="1" required> はい</label>
+                            <label><input type="radio" name="q20" value="2" required> いいえ</label>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <div class="button-group">
-                <button type="button" id="showConfirmationBtn" class="btn btn-primary">送信する</button>
-                <button type="reset" class="btn btn-secondary">リセット</button>
-            </div>
-
-
-            <div id="confirmationModal" class="modal-overlay" style="display: none;">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h2>入力内容の確認</h2>
-                        <span class="modal-close-btn">&times;</span>
+            <div class="form-page" data-page="7">
+                <div class="section">
+                    <h2>生活習慣改善について</h2>
+                    <div class="question">
+                        <label>21. 運動や食生活等の生活習慣を改善してみようと思いますか。 </label>
+                        <div class="radio-group vertical">
+                            <label><input type="radio" name="q21" value="1" required> ① 改善するつもりはない</label>
+                            <label><input type="radio" name="q21" value="2" required> ② 改善するつもりである（概ね6か月以内）</label>
+                            <label><input type="radio" name="q21" value="3" required> ③ 近いうちに（概ね1か月以内）改善するつもりであり、少しずつ始めている</label>
+                            <label><input type="radio" name="q21" value="4" required> ④ 既に改善に取り組んでいる（6か月未満）</label>
+                            <label><input type="radio" name="q21" value="5" required> ⑤ 既に改善に取り組んでいる（6か月以上）</label>
+                        </div>
                     </div>
-                    <div class="modal-body">
-                        <div id="confirmationDetails">
-                            </div>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary modal-cancel-btn">修正する</button>
-                        <button type="submit" class="btn btn-primary">送信</button>
+                    <div class="question">
+                        <label>22. 生活習慣の改善について保健指導を受ける機会があれば、利用しますか。 </label>
+                        <div class="radio-group">
+                            <label><input type="radio" name="q22" value="1" required> はい</label>
+                            <label><input type="radio" name="q22" value="2" required> いいえ</label>
+                        </div>
                     </div>
                 </div>
             </div>
-            </form>
+
+            <div class="form-page" data-page="8">
+                <div class="section">
+                    <h2>入力内容の確認</h2>
+                    <p>以下の内容で送信します。よろしければ「送信」ボタンを押してください。</p>
+                    <div id="confirmationReview">
+                        </div>
+                </div>
+            </div>
+
+            <div class="navigation-buttons">
+                <button type="button" id="backBtn" class="btn btn-secondary">戻る</button>
+                <button type="button" id="nextBtn" class="btn btn-primary">次へ</button>
+                <button type="submit" id="submitBtn" class="btn btn-primary"><span class="btn-icon-plane"></span> 送信する</button>
+            </div>
+        </form>
+        <?php endif; // $message がない場合のみフォーム表示 ?>
 
         <div class="admin-link">
             <a href="admin.php">管理者ログイン</a>
@@ -424,44 +456,154 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <script>
         /**
          * ラジオボタンの選択に応じて特定の要素の表示/非表示を切り替える関数
-         * @param {string} radioName - ラジオボタンのname属性
-         * @param {string} targetGroupId - 表示/非表示を切り替える要素のID
          */
         function setupDynamicForm(radioName, targetGroupId) {
             const radios = document.querySelectorAll(`input[name="${radioName}"]`);
             const targetGroup = document.getElementById(targetGroupId);
-            const targetInput = targetGroup.querySelector('input[type="text"]');
+            const targetInput = targetGroup ? targetGroup.querySelector('input[type="text"]') : null;
 
-            radios.forEach(radio => {
-                radio.addEventListener('change', function() {
-                    if (this.value === '1') { // 「はい」が選択された場合
-                        targetGroup.style.display = 'block';
-                    } else { // 「いいえ」が選択された場合
-                        targetGroup.style.display = 'none';
-                        if(targetInput) targetInput.value = ''; // テキスト入力をクリア
-                    }
-                });
-            });
+            if (!targetGroup) return; // 要素がなければ何もしない
+
+            function toggleVisibility() {
+                const checkedRadio = document.querySelector(`input[name="${radioName}"]:checked`);
+                if (checkedRadio && checkedRadio.value === '1') { // 「はい」が選択された場合
+                    targetGroup.style.display = 'block';
+                } else { // 「いいえ」が選択された場合
+                    targetGroup.style.display = 'none';
+                    if (targetInput) targetInput.value = ''; // テキスト入力をクリア
+                }
+            }
+            
+            radios.forEach(radio => radio.addEventListener('change', toggleVisibility));
+            toggleVisibility(); // 初期表示
         }
 
-        // 各質問に動的フォーム機能を設定
-        setupDynamicForm('q1', 'q1_medicine_name_group');
-        setupDynamicForm('q2', 'q2_medicine_name_group');
-        setupDynamicForm('q3', 'q3_medicine_name_group');
-
-        // ▼▼▼ ここから確認モーダル用のスクリプトを追加 ▼▼▼
         document.addEventListener('DOMContentLoaded', function() {
+            // 送信完了メッセージがある場合は、フォーム操作JSを実行しない
+            if (document.querySelector('.message.success')) {
+                return;
+            }
+            
             const form = document.getElementById('questionnaireForm');
-            const modal = document.getElementById('confirmationModal');
-            const showBtn = document.getElementById('showConfirmationBtn');
-            const closeBtn = document.querySelector('.modal-close-btn');
-            const cancelBtn = document.querySelector('.modal-cancel-btn');
-            const confirmationDetails = document.getElementById('confirmationDetails');
+            const pages = document.querySelectorAll('.form-page');
+            const nextBtn = document.getElementById('nextBtn');
+            const backBtn = document.getElementById('backBtn');
+            const submitBtn = document.getElementById('submitBtn');
+            const progressBar = document.getElementById('progressBar');
+            const progressSteps = document.querySelectorAll('.progress-step');
+            
+            let currentPage = 1;
+            const totalPages = pages.length;
+
+            // 各質問に動的フォーム機能を設定
+            setupDynamicForm('q1', 'q1_medicine_name_group');
+            setupDynamicForm('q2', 'q2_medicine_name_group');
+            setupDynamicForm('q3', 'q3_medicine_name_group');
+
+            /**
+             * ナビゲーションボタンとプログレスバーの状態を更新する
+             */
+            function updateNavigation() {
+                // ページ表示
+                pages.forEach((page, index) => {
+                    page.classList.toggle('active', (index + 1) === currentPage);
+                });
+
+                // ボタン表示
+                backBtn.classList.toggle('visible', currentPage > 1);
+                nextBtn.classList.toggle('visible', currentPage < totalPages);
+                submitBtn.classList.toggle('visible', currentPage === totalPages);
+
+                // プログレスバー
+                const percent = ((currentPage - 1) / (totalPages - 1)) * 100;
+                progressBar.style.width = percent + '%';
+
+                // ステップのテキスト
+                progressSteps.forEach((step, index) => {
+                    const stepNum = index + 1;
+                    if (stepNum < currentPage) {
+                        step.classList.add('completed');
+                        step.classList.remove('active');
+                    } else if (stepNum === currentPage) {
+                        step.classList.add('active');
+                        step.classList.remove('completed');
+                    } else {
+                        step.classList.remove('active');
+                        step.classList.remove('completed');
+                    }
+                });
+            }
+
+            /**
+             * 現在のページのバリデーションを実行する
+             * ▼▼▼ 修正済みの関数 ▼▼▼
+             */
+            function validateCurrentPage() {
+                const activePage = document.querySelector(`.form-page[data-page="${currentPage}"]`);
+                if (!activePage) return false;
+
+                let firstInvalid = null;
+
+                // --- ラジオボタンのチェック ---
+                const radioGroupNames = new Set();
+                // 1. 現在のページにある必須ラジオボタンの「名前」をすべて集める
+                activePage.querySelectorAll('input[type="radio"][required]').forEach(radio => {
+                    radioGroupNames.add(radio.name);
+                });
+
+                // 2. 集めた名前ごとに、グループのどれかがチェックされているか確認
+                radioGroupNames.forEach(name => {
+                    // ★重要: health_check_year のように disabled の場合はチェックしない
+                    const firstRadio = activePage.querySelector(`input[name="${name}"]`);
+                    if (firstRadio && firstRadio.disabled) {
+                        return; // このグループはバリデーション対象外
+                    }
+
+                    const anyChecked = activePage.querySelector(`input[name="${name}"]:checked`);
+                    if (!anyChecked) {
+                        // 3. どのボタンもチェックされていなければ、バリデーションエラー
+                        const radioElement = activePage.querySelector(`input[name="${name}"]`);
+                        if (radioElement) {
+                            // ブラウザ標準のエラー表示を試みる
+                            try {
+                                radioElement.reportValidity();
+                            } catch (e) {
+                                // 独自のアラート
+                                console.warn(`Validation failed for: ${name}`);
+                            }
+                            if (!firstInvalid) firstInvalid = radioElement;
+                        }
+                    }
+                });
+                // --- ラジオボタンのチェックここまで ---
+
+                // --- その他の必須入力（テキストボックスなど）のチェック ---
+                const inputs = activePage.querySelectorAll('input[required], select[required], textarea[required]');
+                inputs.forEach(input => {
+                    if (input.type === 'radio' || input.disabled) return; // ラジオとdisabledは除外
+
+                    if (!input.checkValidity()) {
+                        input.reportValidity();
+                        if (!firstInvalid) firstInvalid = input;
+                    }
+                });
+                // --- その他の必須入力ここまで ---
+
+                if (firstInvalid) {
+                    firstInvalid.focus();
+                    return false;
+                }
+
+                return true;
+            }
+            // ▲▲▲ 修正済みの関数 ▲▲▲
+
 
             // 質問の選択肢の値を表示用のテキストに変換するための対応表
             const valueMappings = {
                 health_check_year: { '2025': '2025年', '2026': '2026年', '2027': '2027年', '2028': '2028年', '2029': '2029年', '2030': '2030年' },
                 health_check_season: { '春': '春', '冬': '冬' },
+                facility_name: { '協立病院': '協立病院', '清寿園': '清寿園', 'かがやき': 'かがやき', 'かがやき2号館': 'かがやき2号館' }, // ★ 追加
                 q1: { '1': 'はい', '2': 'いいえ' },
                 q2: { '1': 'はい', '2': 'いいえ' },
                 q3: { '1': 'はい', '2': 'いいえ' },
@@ -492,71 +634,154 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                  if (!checkedRadio) {
                     // 固定されている場合、disabledのラジオから値を取得
                     const disabledRadio = form.querySelector(`input[name="${name}"]:disabled`);
-                    if(disabledRadio) return valueMappings[name] ? (valueMappings[name][disabledRadio.value] || '不明') : disabledRadio.value;
+                    if(disabledRadio) {
+                        const map = valueMappings[name] || {};
+                        return map[disabledRadio.value] || disabledRadio.value;
+                    }
                     return '<span style="color: red;">未選択</span>';
                 }
-                return valueMappings[name][checkedRadio.value] || '不明';
+                const map = valueMappings[name] || {};
+                return map[checkedRadio.value] || checkedRadio.value;
             }
 
             // テキスト入力の値を取得する関数
             function getInputValue(id) {
                 const element = document.getElementById(id);
                 const value = element ? element.value.trim() : '';
-                return value ? value : '未入力';
+                return value ? htmlspecialchars(value) : '未入力';
             }
 
-            // 「送信する」ボタンがクリックされた時の処理
-            showBtn.addEventListener('click', function() {
-                // HTML5のフォームバリデーションを実行
-                if (!form.checkValidity()) {
-                    // バリデーションエラーがあれば、ブラウザ標準のエラーメッセージを表示
-                    form.reportValidity();
-                    return;
-                }
+            // HTMLエスケープ
+            function htmlspecialchars(str) {
+                return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+            }
 
+            /**
+             * 確認ページ（ページ8）の内容を生成する
+             */
+            function buildConfirmationReview() {
+                const confirmationReview = document.getElementById('confirmationReview');
                 let detailsHtml = '<ul>';
+
+                // ページ1
+                detailsHtml += `<li><strong>年度:</strong> ${getRadioValueText('health_check_year')}</li>`;
+                detailsHtml += `<li><strong>時期:</strong> ${getRadioValueText('health_check_season')}</li>`;
                 detailsHtml += `<li><strong>職員ID:</strong> ${getInputValue('staff_id')}</li>`;
                 detailsHtml += `<li><strong>氏名:</strong> ${getInputValue('staff_name')}</li>`;
                 detailsHtml += `<li><strong>所属部署:</strong> ${getInputValue('department')}</li>`;
-                detailsHtml += `<li><strong>年度:</strong> ${getRadioValueText('health_check_year')}</li>`;
-                detailsHtml += `<li><strong>時期:</strong> ${getRadioValueText('health_check_season')}</li>`;
+                detailsHtml += `<li><strong>施設名:</strong> ${getRadioValueText('facility_name')}</li>`; // ★ 追加
 
-                // 全ての質問項目をループして内容を生成
-                document.querySelectorAll('.question').forEach(q => {
-                    const label = q.querySelector('label').childNodes[0].textContent.trim();
-                    const radioName = q.querySelector('input[type="radio"]')?.name;
-                    if (radioName) {
-                        let answerText = getRadioValueText(radioName);
-                        // 薬名のテキスト入力がある場合、その値も追加
-                        const medicineInput = q.querySelector('input[type="text"]');
-                        if (medicineInput && medicineInput.value.trim()) {
-                            answerText += ` (薬名: ${medicineInput.value.trim()})`;
-                        }
-                        detailsHtml += `<li><strong>${label}</strong> ${answerText}</li>`;
-                    }
-                });
+                // ページ2
+                let q1_text = getRadioValueText('q1');
+                if (getRadioValueText('q1') === 'はい' && getInputValue('q1_medicine_name') !== '未入力') q1_text += ` (${getInputValue('q1_medicine_name')})`;
+                detailsHtml += `<li><strong>1. 血圧を下げる薬:</strong> ${q1_text}</li>`;
+                
+                let q2_text = getRadioValueText('q2');
+                if (getRadioValueText('q2') === 'はい' && getInputValue('q2_medicine_name') !== '未入力') q2_text += ` (${getInputValue('q2_medicine_name')})`;
+                detailsHtml += `<li><strong>2. インスリン注射又は血糖を下げる薬:</strong> ${q2_text}</li>`;
+                
+                let q3_text = getRadioValueText('q3');
+                if (getRadioValueText('q3') === 'はい' && getInputValue('q3_medicine_name') !== '未入力') q3_text += ` (${getInputValue('q3_medicine_name')})`;
+                detailsHtml += `<li><strong>3. コレステロールを下げる薬:</strong> ${q3_text}</li>`;
+                
+                // ページ3
+                detailsHtml += `<li><strong>4. 脳卒中:</strong> ${getRadioValueText('q4')}</li>`;
+                detailsHtml += `<li><strong>5. 心臓病:</strong> ${getRadioValueText('q5')}</li>`;
+                detailsHtml += `<li><strong>6. 慢性の腎不全:</strong> ${getRadioValueText('q6')}</li>`;
+                detailsHtml += `<li><strong>7. 貧血:</strong> ${getRadioValueText('q7')}</li>`;
+                
+                // ページ4
+                detailsHtml += `<li><strong>8. 喫煙:</strong> ${getRadioValueText('q8')}</li>`;
+                detailsHtml += `<li><strong>9. 20歳の時から10kg以上体重増加:</strong> ${getRadioValueText('q9')}</li>`;
+                detailsHtml += `<li><strong>10. 30分以上の運動を週2日以上:</strong> ${getRadioValueText('q10')}</li>`;
+                detailsHtml += `<li><strong>11. 1日1時間以上歩行:</strong> ${getRadioValueText('q11')}</li>`;
+                detailsHtml += `<li><strong>12. 歩く速度が速い:</strong> ${getRadioValueText('q12')}</li>`;
+                detailsHtml += `<li><strong>13. 1年で体重±3kg以上変動:</strong> ${getRadioValueText('q13')}</li>`;
+
+                // ページ5
+                detailsHtml += `<li><strong>14. 食べる速度:</strong> ${getRadioValueText('q14')}</li>`;
+                detailsHtml += `<li><strong>15. 就寝前2時間以内の夕食:</strong> ${getRadioValueText('q15')}</li>`;
+                detailsHtml += `<li><strong>16. 夕食後の間食:</strong> ${getRadioValueText('q16')}</li>`;
+                detailsHtml += `<li><strong>17. 朝食抜き:</strong> ${getRadioValueText('q17')}</li>`;
+                
+                // ページ6
+                detailsHtml += `<li><strong>18. 飲酒頻度:</strong> ${getRadioValueText('q18')}</li>`;
+                detailsHtml += `<li><strong>19. 飲酒量:</strong> ${getRadioValueText('q19')}</li>`;
+                detailsHtml += `<li><strong>20. 睡眠で休養:</strong> ${getRadioValueText('q20')}</li>`;
+                
+                // ページ7
+                detailsHtml += `<li><strong>21. 生活習慣改善の意欲:</strong> ${getRadioValueText('q21')}</li>`;
+                detailsHtml += `<li><strong>22. 保健指導の利用希望:</strong> ${getRadioValueText('q22')}</li>`;
 
                 detailsHtml += '</ul>';
-                confirmationDetails.innerHTML = detailsHtml;
-                modal.style.display = 'flex'; // モーダルを表示
-            });
-
-            // モーダルを閉じる関数
-            function closeModal() {
-                modal.style.display = 'none';
+                confirmationReview.innerHTML = detailsHtml;
             }
 
-            // 閉じるボタンとキャンセルボタンにイベントを設定
-            closeBtn.addEventListener('click', closeModal);
-            cancelBtn.addEventListener('click', closeModal);
-
-            // モーダルの外側（オーバーレイ）をクリックしても閉じるように設定
-            modal.addEventListener('click', function(e) {
-                if (e.target === modal) {
-                    closeModal();
+            // 「次へ」ボタンの処理
+            nextBtn.addEventListener('click', function() {
+                if (validateCurrentPage()) {
+                    if (currentPage < totalPages) {
+                        currentPage++;
+                        if (currentPage === totalPages) {
+                            buildConfirmationReview();
+                        }
+                        updateNavigation();
+                        window.scrollTo(0, 0); // ページトップにスクロール
+                    }
                 }
             });
+
+            // 「戻る」ボタンの処理
+            backBtn.addEventListener('click', function() {
+                if (currentPage > 1) {
+                    currentPage--;
+                    updateNavigation();
+                    window.scrollTo(0, 0); // ページトップにスクロール
+                }
+            });
+
+            // フォーム送信時の最終確認
+            form.addEventListener('submit', function(e) {
+                // 最後のページで、最終バリデーションを実行
+                if (currentPage === totalPages) {
+                    // 全ページのバリデーション（簡易版）
+                    const allRequiredRadios = new Set();
+                    form.querySelectorAll('input[type="radio"][required]').forEach(radio => {
+                        if (radio.disabled) return;
+                        allRequiredRadios.add(radio.name);
+                    });
+                    
+                    let allValid = true;
+                    allRequiredRadios.forEach(name => {
+                        if (!form.querySelector(`input[name="${name}"]:checked`)) {
+                            allValid = false;
+                        }
+                    });
+
+                    form.querySelectorAll('input[required], select[required], textarea[required]').forEach(input => {
+                        if (input.type === 'radio' || input.disabled) return;
+                        if (!input.checkValidity()) {
+                            allValid = false;
+                        }
+                    });
+
+                    if (!allValid) {
+                        e.preventDefault();
+                        alert('未入力の必須項目があります。前のページに戻って確認してください。');
+                        return;
+                    }
+                }
+                
+                if (!confirm('この内容で送信してもよろしいですか？')) {
+                    e.preventDefault();
+                }
+            });
+
+            // 初期表示
+            updateNavigation();
         });
     </script>
 </body>
 </html>
+
+
