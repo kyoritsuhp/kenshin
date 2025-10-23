@@ -1,0 +1,253 @@
+/*
+ * admin_dashboard.php 専用スタイル (admin_dashboard_style.css)
+ */
+
+/* ===============================================
+   共通スタイル
+   =============================================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', 'Hiragino Sans', 'Meiryo', sans-serif;
+    font-size: 11px;
+    line-height: 1.4;
+    background: #FFFFFF;
+    min-height: 100vh;
+    padding: 50px 10px;
+    overflow-x: hidden;
+}
+
+.container {
+    max-width: 800px;
+    margin: 0 auto;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    overflow: hidden;
+    transform: scale(1.25);
+    transform-origin: top center;
+}
+
+.header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 15px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    position: relative;
+}
+
+.header h1 {
+    font-size: 18px;
+    margin-bottom: 5px;
+    font-weight: 600;
+    margin: 0;
+}
+
+.subtitle {
+    font-size: 11px;
+    opacity: 0.9;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-secondary {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #5a6268;
+}
+
+
+/* ===============================================
+   admin_dashboard.php (管理者ページ) のスタイル
+   =============================================== */
+.dashboard-page .container {
+    max-width: 1200px;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+}
+
+.btn-small {
+    padding: 6px 12px;
+    font-size: 11px;
+}
+
+.table-container {
+    overflow-x: auto;
+    max-height: 500px;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10px;
+    background: white;
+}
+
+table th {
+    background: #667eea;
+    color: white;
+    padding: 8px 5px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 10px;
+    position: sticky;
+    top: 0;
+}
+
+table td {
+    padding: 6px 5px;
+    border-bottom: 1px solid #dee2e6;
+}
+
+table tr:hover {
+    background: #f8f9fa;
+}
+
+.logout-btn {
+    position: absolute;
+    top: 15px;
+    right: 20px;
+    padding: 6px 12px;
+    background: rgba(255,255,255,0.2);
+    color: white;
+    border: 1px solid white;
+    border-radius: 4px;
+    font-size: 10px;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.logout-btn:hover {
+    background: rgba(255,255,255,0.3);
+}
+.back-to-form-btn {
+    position: absolute;
+    top: 50%;
+    left: 20px;
+    transform: translateY(-50%);
+    padding: 6px 12px;
+    background: rgba(255,255,255,0.2);
+    color: white;
+    border: 1px solid white;
+    border-radius: 4px;
+    font-size: 11px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background-color 0.3s;
+}
+
+.back-to-form-btn:hover {
+    background: rgba(255,255,255,0.3);
+}
+
+/* ===============================================
+   フィルター用スタイル (インラインから移動)
+   =============================================== */
+.filter-section {
+    background: #f8f9fa;
+    padding: 15px 20px;
+    border-radius: 6px;
+    margin-bottom: 20px;
+    border: 1px solid #dee2e6;
+}
+.filter-group strong {
+    display: block;
+    font-size: 12px;
+    margin-bottom: 5px;
+    color: #555;
+}
+.filter-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+.filter-options label {
+    display: inline-flex;
+    align-items: center;
+    padding: 5px 10px;
+    background: #fff;
+    border: 1px solid #dee2e6;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 11px;
+    font-weight: normal;
+}
+.filter-options label:hover {
+    background: #e9ecef;
+    border-color: #667eea;
+}
+
+.filter-options label.is-selected {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+.filter-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #dee2e6;
+}
+.filter-row {
+    display: flex;
+    gap: 20px;
+}
+.filter-row .filter-group {
+    flex: 1;
+    min-width: 0;
+}
+
+/* ソート用スタイル */
+th a {
+    color: white;
+    text-decoration: none;
+    display: block;
+}
+th a:hover {
+    text-decoration: underline;
+}
+.sort-asc, .sort-desc {
+    font-size: 9px;
+    vertical-align: middle;
+}

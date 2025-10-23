@@ -122,10 +122,9 @@ try {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>問診票データ編集</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-    <div class="container">
+    <link rel="stylesheet" href="admin_index_style.css">
+    </head>
+<body class="dashboard-page"> <div class="container">
         <header class="header">
             <h1>問診票データ編集 (回答ID: <?php echo htmlspecialchars($response['response_id']); ?>)</h1>
             <p class="subtitle">標準的な質問票</p>
@@ -143,8 +142,8 @@ try {
             <div class="section">
                 <h2>職員情報</h2>
                 <div class="form-group">
-                    <label for="staff_id">職員ID <span class="required">*必須</span></label>
-                    <input type="text" id="staff_id" name="staff_id" value="<?php echo htmlspecialchars($response['staff_id']); ?>" required>
+                    <label for="staff_id">職員ID</label>
+                    <input type="text" id="staff_id" name="staff_id" value="<?php echo htmlspecialchars($response['staff_id']); ?>">
                 </div>
                 <div class="form-group">
                     <label for="staff_name">氏名</label>
@@ -161,7 +160,7 @@ try {
                 <div class="question">
                     <label>1. a. 血圧を下げる薬</label>
                     <div class="radio-group">
-                        <label><input type="radio" name="q1" value="1" <?php if($response['q1_blood_pressure_med'] == 1) echo 'checked'; ?> required> はい</label>
+                        <label><input type="radio" name="q1" value="1" <?php if($response['q1_blood_pressure_med'] == 1) echo 'checked'; ?>> はい</label>
                         <label><input type="radio" name="q1" value="2" <?php if($response['q1_blood_pressure_med'] == 2) echo 'checked'; ?>> いいえ</label>
                     </div>
                     <div class="form-group" id="q1_medicine_name_group" style="display: none; margin-top: 10px;">
@@ -172,7 +171,7 @@ try {
                 <div class="question">
                     <label>2. b. インスリン注射又は血糖を下げる薬</label>
                     <div class="radio-group">
-                        <label><input type="radio" name="q2" value="1" <?php if($response['q2_insulin_med'] == 1) echo 'checked'; ?> required> はい</label>
+                        <label><input type="radio" name="q2" value="1" <?php if($response['q2_insulin_med'] == 1) echo 'checked'; ?>> はい</label>
                         <label><input type="radio" name="q2" value="2" <?php if($response['q2_insulin_med'] == 2) echo 'checked'; ?>> いいえ</label>
                     </div>
                     <div class="form-group" id="q2_medicine_name_group" style="display: none; margin-top: 10px;">
@@ -183,7 +182,7 @@ try {
                 <div class="question">
                     <label>3. c. コレステロールを下げる薬</label>
                     <div class="radio-group">
-                        <label><input type="radio" name="q3" value="1" <?php if($response['q3_cholesterol_med'] == 1) echo 'checked'; ?> required> はい</label>
+                        <label><input type="radio" name="q3" value="1" <?php if($response['q3_cholesterol_med'] == 1) echo 'checked'; ?>> はい</label>
                         <label><input type="radio" name="q3" value="2" <?php if($response['q3_cholesterol_med'] == 2) echo 'checked'; ?>> いいえ</label>
                     </div>
                     <div class="form-group" id="q3_medicine_name_group" style="display: none; margin-top: 10px;">
@@ -198,28 +197,28 @@ try {
                 <div class="question">
                     <label>4. 脳卒中（脳出血、脳梗塞等）</label>
                     <div class="radio-group">
-                        <label><input type="radio" name="q4" value="1" <?php if($response['q4_stroke'] == 1) echo 'checked'; ?> required> はい</label>
+                        <label><input type="radio" name="q4" value="1" <?php if($response['q4_stroke'] == 1) echo 'checked'; ?>> はい</label>
                         <label><input type="radio" name="q4" value="2" <?php if($response['q4_stroke'] == 2) echo 'checked'; ?>> いいえ</label>
                     </div>
                 </div>
                 <div class="question">
                     <label>5. 心臓病（狭心症、心筋梗塞等）</label>
                     <div class="radio-group">
-                        <label><input type="radio" name="q5" value="1" <?php if($response['q5_heart_disease'] == 1) echo 'checked'; ?> required> はい</label>
+                        <label><input type="radio" name="q5" value="1" <?php if($response['q5_heart_disease'] == 1) echo 'checked'; ?>> はい</label>
                         <label><input type="radio" name="q5" value="2" <?php if($response['q5_heart_disease'] == 2) echo 'checked'; ?>> いいえ</label>
                     </div>
                 </div>
                 <div class="question">
                     <label>6. 慢性の腎不全（人工透析）</label>
                     <div class="radio-group">
-                        <label><input type="radio" name="q6" value="1" <?php if($response['q6_kidney_failure'] == 1) echo 'checked'; ?> required> はい</label>
+                        <label><input type="radio" name="q6" value="1" <?php if($response['q6_kidney_failure'] == 1) echo 'checked'; ?>> はい</label>
                         <label><input type="radio" name="q6" value="2" <?php if($response['q6_kidney_failure'] == 2) echo 'checked'; ?>> いいえ</label>
                     </div>
                 </div>
                 <div class="question">
                     <label>7. 貧血</label>
                     <div class="radio-group">
-                        <label><input type="radio" name="q7" value="1" <?php if($response['q7_anemia'] == 1) echo 'checked'; ?> required> はい</label>
+                        <label><input type="radio" name="q7" value="1" <?php if($response['q7_anemia'] == 1) echo 'checked'; ?>> はい</label>
                         <label><input type="radio" name="q7" value="2" <?php if($response['q7_anemia'] == 2) echo 'checked'; ?>> いいえ</label>
                     </div>
                 </div>
@@ -230,42 +229,42 @@ try {
                 <div class="question">
                     <label>8. 喫煙</label>
                     <div class="radio-group">
-                        <label><input type="radio" name="q8" value="1" <?php if($response['q8_smoking'] == 1) echo 'checked'; ?> required> はい</label>
+                        <label><input type="radio" name="q8" value="1" <?php if($response['q8_smoking'] == 1) echo 'checked'; ?>> はい</label>
                         <label><input type="radio" name="q8" value="2" <?php if($response['q8_smoking'] == 2) echo 'checked'; ?>> いいえ</label>
                     </div>
                 </div>
                 <div class="question">
                     <label>9. 20歳の時から10kg以上体重増加</label>
                     <div class="radio-group">
-                        <label><input type="radio" name="q9" value="1" <?php if($response['q9_weight_gain'] == 1) echo 'checked'; ?> required> はい</label>
+                        <label><input type="radio" name="q9" value="1" <?php if($response['q9_weight_gain'] == 1) echo 'checked'; ?>> はい</label>
                         <label><input type="radio" name="q9" value="2" <?php if($response['q9_weight_gain'] == 2) echo 'checked'; ?>> いいえ</label>
                     </div>
                 </div>
                 <div class="question">
                     <label>10. 30分以上の運動を週2日以上</label>
                     <div class="radio-group">
-                        <label><input type="radio" name="q10" value="1" <?php if($response['q10_exercise'] == 1) echo 'checked'; ?> required> はい</label>
+                        <label><input type="radio" name="q10" value="1" <?php if($response['q10_exercise'] == 1) echo 'checked'; ?>> はい</label>
                         <label><input type="radio" name="q10" value="2" <?php if($response['q10_exercise'] == 2) echo 'checked'; ?>> いいえ</label>
                     </div>
                 </div>
                 <div class="question">
                     <label>11. 1日1時間以上歩行</label>
                     <div class="radio-group">
-                        <label><input type="radio" name="q11" value="1" <?php if($response['q11_walking'] == 1) echo 'checked'; ?> required> はい</label>
+                        <label><input type="radio" name="q11" value="1" <?php if($response['q11_walking'] == 1) echo 'checked'; ?>> はい</label>
                         <label><input type="radio" name="q11" value="2" <?php if($response['q11_walking'] == 2) echo 'checked'; ?>> いいえ</label>
                     </div>
                 </div>
                 <div class="question">
                     <label>12. 歩く速度が速い</label>
                     <div class="radio-group">
-                        <label><input type="radio" name="q12" value="1" <?php if($response['q12_walking_speed'] == 1) echo 'checked'; ?> required> はい</label>
+                        <label><input type="radio" name="q12" value="1" <?php if($response['q12_walking_speed'] == 1) echo 'checked'; ?>> はい</label>
                         <label><input type="radio" name="q12" value="2" <?php if($response['q12_walking_speed'] == 2) echo 'checked'; ?>> いいえ</label>
                     </div>
                 </div>
                 <div class="question">
                     <label>13. 1年で体重±3kg以上変動</label>
                     <div class="radio-group">
-                        <label><input type="radio" name="q13" value="1" <?php if($response['q13_weight_change'] == 1) echo 'checked'; ?> required> はい</label>
+                        <label><input type="radio" name="q13" value="1" <?php if($response['q13_weight_change'] == 1) echo 'checked'; ?>> はい</label>
                         <label><input type="radio" name="q13" value="2" <?php if($response['q13_weight_change'] == 2) echo 'checked'; ?>> いいえ</label>
                     </div>
                 </div>
@@ -276,7 +275,7 @@ try {
                 <div class="question">
                     <label>14. 食べる速度</label>
                     <div class="radio-group">
-                        <label><input type="radio" name="q14" value="1" <?php if($response['q14_eating_speed'] == 1) echo 'checked'; ?> required> 速い</label>
+                        <label><input type="radio" name="q14" value="1" <?php if($response['q14_eating_speed'] == 1) echo 'checked'; ?>> 速い</label>
                         <label><input type="radio" name="q14" value="2" <?php if($response['q14_eating_speed'] == 2) echo 'checked'; ?>> ふつう</label>
                         <label><input type="radio" name="q14" value="3" <?php if($response['q14_eating_speed'] == 3) echo 'checked'; ?>> 遅い</label>
                     </div>
@@ -284,21 +283,21 @@ try {
                 <div class="question">
                     <label>15. 就寝前2時間以内の夕食</label>
                     <div class="radio-group">
-                        <label><input type="radio" name="q15" value="1" <?php if($response['q15_dinner_before_bed'] == 1) echo 'checked'; ?> required> はい</label>
+                        <label><input type="radio" name="q15" value="1" <?php if($response['q15_dinner_before_bed'] == 1) echo 'checked'; ?>> はい</label>
                         <label><input type="radio" name="q15" value="2" <?php if($response['q15_dinner_before_bed'] == 2) echo 'checked'; ?>> いいえ</label>
                     </div>
                 </div>
                 <div class="question">
                     <label>16. 夕食後の間食</label>
                     <div class="radio-group">
-                        <label><input type="radio" name="q16" value="1" <?php if($response['q16_snack_after_dinner'] == 1) echo 'checked'; ?> required> はい</label>
+                        <label><input type="radio" name="q16" value="1" <?php if($response['q16_snack_after_dinner'] == 1) echo 'checked'; ?>> はい</label>
                         <label><input type="radio" name="q16" value="2" <?php if($response['q16_snack_after_dinner'] == 2) echo 'checked'; ?>> いいえ</label>
                     </div>
                 </div>
                 <div class="question">
                     <label>17. 朝食抜き</label>
                     <div class="radio-group">
-                        <label><input type="radio" name="q17" value="1" <?php if($response['q17_skip_breakfast'] == 1) echo 'checked'; ?> required> はい</label>
+                        <label><input type="radio" name="q17" value="1" <?php if($response['q17_skip_breakfast'] == 1) echo 'checked'; ?>> はい</label>
                         <label><input type="radio" name="q17" value="2" <?php if($response['q17_skip_breakfast'] == 2) echo 'checked'; ?>> いいえ</label>
                     </div>
                 </div>
@@ -309,7 +308,7 @@ try {
                 <div class="question">
                     <label>18. 飲酒頻度</label>
                     <div class="radio-group">
-                        <label><input type="radio" name="q18" value="1" <?php if($response['q18_alcohol_frequency'] == 1) echo 'checked'; ?> required> 毎日</label>
+                        <label><input type="radio" name="q18" value="1" <?php if($response['q18_alcohol_frequency'] == 1) echo 'checked'; ?>> 毎日</label>
                         <label><input type="radio" name="q18" value="2" <?php if($response['q18_alcohol_frequency'] == 2) echo 'checked'; ?>> 時々</label>
                         <label><input type="radio" name="q18" value="3" <?php if($response['q18_alcohol_frequency'] == 3) echo 'checked'; ?>> 飲まない</label>
                     </div>
@@ -317,7 +316,7 @@ try {
                 <div class="question">
                     <label>19. 飲酒量</label>
                     <div class="radio-group">
-                        <label><input type="radio" name="q19" value="1" <?php if($response['q19_alcohol_amount'] == 1) echo 'checked'; ?> required> 1合未満</label>
+                        <label><input type="radio" name="q19" value="1" <?php if($response['q19_alcohol_amount'] == 1) echo 'checked'; ?>> 1合未満</label>
                         <label><input type="radio" name="q19" value="2" <?php if($response['q19_alcohol_amount'] == 2) echo 'checked'; ?>> 1-2合</label>
                         <label><input type="radio" name="q19" value="3" <?php if($response['q19_alcohol_amount'] == 3) echo 'checked'; ?>> 2-3合</label>
                         <label><input type="radio" name="q19" value="4" <?php if($response['q19_alcohol_amount'] == 4) echo 'checked'; ?>> 3合以上</label>
@@ -326,14 +325,14 @@ try {
                 <div class="question">
                     <label>20. 睡眠で休養</label>
                     <div class="radio-group">
-                        <label><input type="radio" name="q20" value="1" <?php if($response['q20_sleep'] == 1) echo 'checked'; ?> required> はい</label>
+                        <label><input type="radio" name="q20" value="1" <?php if($response['q20_sleep'] == 1) echo 'checked'; ?>> はい</label>
                         <label><input type="radio" name="q20" value="2" <?php if($response['q20_sleep'] == 2) echo 'checked'; ?>> いいえ</label>
                     </div>
                 </div>
                 <div class="question">
                     <label>21. 生活習慣改善の意欲</label>
                     <div class="radio-group vertical">
-                        <label><input type="radio" name="q21" value="1" <?php if($response['q21_improvement_intention'] == 1) echo 'checked'; ?> required> 改善するつもりはない</label>
+                        <label><input type="radio" name="q21" value="1" <?php if($response['q21_improvement_intention'] == 1) echo 'checked'; ?>> 改善するつもりはない</label>
                         <label><input type="radio" name="q21" value="2" <?php if($response['q21_improvement_intention'] == 2) echo 'checked'; ?>> 改善するつもり(6ヶ月以内)</label>
                         <label><input type="radio" name="q21" value="3" <?php if($response['q21_improvement_intention'] == 3) echo 'checked'; ?>> 近いうちに改善(1ヶ月以内)</label>
                         <label><input type="radio" name="q21" value="4" <?php if($response['q21_improvement_intention'] == 4) echo 'checked'; ?>> 既に取り組んでいる(6ヶ月未満)</label>
@@ -343,7 +342,7 @@ try {
                 <div class="question">
                     <label>22. 保健指導の利用希望</label>
                     <div class="radio-group">
-                        <label><input type="radio" name="q22" value="1" <?php if($response['q22_guidance_use'] == 1) echo 'checked'; ?> required> はい</label>
+                        <label><input type="radio" name="q22" value="1" <?php if($response['q22_guidance_use'] == 1) echo 'checked'; ?>> はい</label>
                         <label><input type="radio" name="q22" value="2" <?php if($response['q22_guidance_use'] == 2) echo 'checked'; ?>> いいえ</label>
                     </div>
                 </div>
@@ -381,7 +380,8 @@ try {
         document.addEventListener('DOMContentLoaded', function() {
             // フォーム送信前の確認
             document.getElementById('questionnaireForm').addEventListener('submit', function(e) {
-                if (!confirm('この内容で更新してもよろしいですか？')) {
+                var isDeleteSubmit = document.activeElement && document.activeElement.name === 'delete';
+                if (!isDeleteSubmit && !confirm('この内容で更新してもよろしいですか？')) {
                     e.preventDefault();
                 }
             });
@@ -433,6 +433,40 @@ try {
                 });
             }
             // ▲▲▲ 削除モーダル用のスクリプトを追加 ▲▲▲
+
+            /**
+             * ラジオボタンのスタイルを更新する
+             * @param {string} groupName - ラジオボタンのname属性
+             */
+            function updateRadioStyles(groupName) {
+                // name属性が一致するラジオボタンをすべて取得
+                const radiosInGroup = document.querySelectorAll(`.radio-group input[name="${groupName}"]`);
+                radiosInGroup.forEach(radio => {
+                    const label = radio.closest('label');
+                    if (label) {
+                        // radio.checked が true なら .is-selected を追加, false なら削除
+                        label.classList.toggle('is-selected', radio.checked);
+                    }
+                });
+            }
+
+            // このページのラジオボタン（.radio-group 内）をすべて取得
+            const allFormRadios = document.querySelectorAll('.radio-group input[type="radio"]');
+            const radioGroups = new Set(); // name属性を管理
+
+            allFormRadios.forEach(radio => {
+                radioGroups.add(radio.name); // name属性をセットに保存
+
+                // 1. ラジオボタンが変更されたら、そのグループのスタイルを更新
+                radio.addEventListener('change', function() {
+                    updateRadioStyles(this.name);
+                });
+            });
+
+            // 2. ページロード時に、チェックされている項目のスタイルを初期設定
+            radioGroups.forEach(name => {
+                updateRadioStyles(name);
+            });
         });
     </script>
 </body>

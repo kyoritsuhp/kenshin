@@ -76,7 +76,7 @@ if (!empty($where_clauses)) {
 
 // ▼▼▼ ソート順を動的に変更 ▼▼▼
 $sql .= " ORDER BY $sort_by $sort_order";
-// ▲▲▲ ソート順を動的に変更 ▲▲▲
+// ▲▲▲ ソート順を動的に変更 ▼▼▲
 
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
@@ -130,8 +130,16 @@ if (isset($_GET['logout'])) {
     exit;
 }
 
+// ▼▼▼ 変更箇所 ▼▼▼
 // フィルター用のユニークな値を取得
-$years = $pdo->query("SELECT DISTINCT health_check_year FROM questionnaire_responses ORDER BY health_check_year DESC")->fetchAll(PDO::FETCH_COLUMN);
+$db_years = $pdo->query("SELECT DISTINCT health_check_year FROM questionnaire_responses")->fetchAll(PDO::FETCH_COLUMN);
+// フィルターに静的に追加したい年
+$static_years_to_add = ['2026']; 
+// DBの結果と静的な年をマージし、重複を削除
+$years = array_unique(array_merge($db_years, $static_years_to_add));
+// 降順（新しい年が上）にソート
+rsort($years, SORT_NUMERIC);
+// ▲▲▲ 変更ここまで ▲▲▲
 
 ?>
 <!DOCTYPE html>
@@ -140,78 +148,8 @@ $years = $pdo->query("SELECT DISTINCT health_check_year FROM questionnaire_respo
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>管理者ダッシュボード</title>
-    <link rel="stylesheet" href="style.css">
-    <style>
-        .filter-section {
-            background: #f8f9fa;
-            padding: 15px 20px;
-            border-radius: 6px;
-            margin-bottom: 20px;
-            border: 1px solid #dee2e6;
-        }
-        .filter-group strong {
-            display: block;
-            font-size: 12px;
-            margin-bottom: 5px;
-            color: #555;
-        }
-        .filter-options {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        .filter-options label {
-            display: inline-flex;
-            align-items: center;
-            padding: 5px 10px;
-            background: #fff;
-            border: 1px solid #dee2e6;
-            border-radius: 4px;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-size: 11px;
-            font-weight: normal;
-        }
-        .filter-options label:hover {
-            background: #e9ecef;
-            border-color: #667eea;
-        }
-        .filter-options label:has(input[type="radio"]:checked) {
-            background: #667eea;
-            color: white;
-            border-color: #667eea;
-        }
-        .filter-buttons {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px solid #dee2e6;
-        }
-        .filter-row {
-            display: flex;
-            gap: 20px;
-        }
-        .filter-row .filter-group {
-            flex: 1;
-            min-width: 0;
-        }
-        
-        /* ソート用スタイル */
-        th a {
-            color: white;
-            text-decoration: none;
-            display: block;
-        }
-        th a:hover {
-            text-decoration: underline;
-        }
-        .sort-asc, .sort-desc {
-            font-size: 9px;
-            vertical-align: middle;
-        }
-    </style>
-</head>
+    <link rel="stylesheet" href="admin_dashboard_style.css">
+    </head>
 
 <body class="dashboard-page">
     <div class="container">
@@ -265,7 +203,6 @@ $years = $pdo->query("SELECT DISTINCT health_check_year FROM questionnaire_respo
             <div class="action-buttons">
                 <a href="export_csv.php<?php echo htmlspecialchars($export_query_string); ?>" class="btn btn-primary btn-small">CSV出力</a>
                 <a href="export_excel.php<?php echo htmlspecialchars($export_query_string); ?>" class="btn btn-primary btn-small">Excel出力</a>
-                <button onclick="window.print()" class="btn btn-secondary btn-small">印刷</button>
                 <a href="admin_manage.php" class="btn btn-primary btn-small">管理画面</a>
             </div>
 
@@ -312,5 +249,40 @@ $years = $pdo->query("SELECT DISTINCT health_check_year FROM questionnaire_respo
             </div>
         </div>
     </div>
-</body>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            /**
+             * フィルタラジオボタンのスタイルを更新する
+             * @param {string} groupName - ラジオボタンのname属性 (facility, year, season)
+             */
+            function updateFilterStyles(groupName) {
+                const radiosInGroup = document.querySelectorAll(`.filter-options input[name="${groupName}"]`);
+                radiosInGroup.forEach(radio => {
+                    const label = radio.closest('label');
+                    if (label) {
+                        // radio.checked が true なら .is-selected を追加, false なら削除
+                        label.classList.toggle('is-selected', radio.checked);
+                    }
+                });
+            }
+
+            // フィルタセクション内のすべてのラジオボタンを取得
+            const allFilterRadios = document.querySelectorAll('.filter-options input[type="radio"]');
+
+            allFilterRadios.forEach(radio => {
+                // 1. ラジオボタンが変更されたら、そのグループのスタイルを更新
+                radio.addEventListener('change', function() {
+                    updateFilterStyles(this.name);
+                });
+
+                // 2. ページロード時に、チェックされている項目のスタイルを初期設定
+                // (PHPによって 'checked' が付与されているため)
+                if (radio.checked) {
+                    updateFilterStyles(radio.name);
+                }
+            });
+        });
+    </script>
+    </body>
 </html>

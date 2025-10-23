@@ -115,8 +115,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>職員健康診断 問診票</title>
-    <link rel="stylesheet" href="style.css">
-</head>
+    <link rel="stylesheet" href="index_style.css">
+    </head>
 <body>
     <div class="container">
         <header class="header">
@@ -502,13 +502,93 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             setupDynamicForm('q2', 'q2_medicine_name_group');
             setupDynamicForm('q3', 'q3_medicine_name_group');
 
+            // ▼▼▼ 修正: ページ表示時に必須項目のラベル色を（赤に）設定する関数 ▼▼▼
+            /**
+             * ページ内の必須ラジオ項目をチェックし、未選択なら.is-invalidを付与
+             * @param {HTMLElement} pageElement - 対象のページ要素
+             */
+            function setInitialValidationState(pageElement) {
+                const radioGroupNames = new Set();
+                // 1. ページ内の必須ラジオのnameをすべて集める
+                pageElement.querySelectorAll('input[type="radio"][required]').forEach(radio => {
+                    radioGroupNames.add(radio.name);
+                });
+
+                radioGroupNames.forEach(name => {
+                    // 2. グループ内の最初のラジオ（ disabled チェック用）
+                    const firstRadio = pageElement.querySelector(`input[name="${name}"]`);
+                    // 3. disabled（固定値）の場合はチェック対象外
+                    if (firstRadio && firstRadio.disabled) {
+                        return;
+                    }
+
+                    // 4. グループ内でチェック済みの項目があるか確認
+                    const anyChecked = pageElement.querySelector(`input[name="${name}"]:checked`);
+                    
+                    // 5. 親コンテナ（.question または .form-group）を探す
+                    const parentContainer = firstRadio.closest('.question') || firstRadio.closest('.form-group');
+                    if (!parentContainer) return;
+
+                    if (!anyChecked) {
+                        // 6. 未選択の場合： ラベルを赤にする
+                        parentContainer.classList.add('is-invalid');
+                    } else {
+                        // 7. 選択済みの場合（例：ブラウザが値を保持）： ラベルを赤にしない
+                        parentContainer.classList.remove('is-invalid');
+                    }
+                });
+            }
+            // ▲▲▲
+
+            // ▼▼▼ 修正: ラジオボタンの選択（change）イベント ▼▼▼
+            /**
+             * ラジオボタン選択時のスタイル（背景色）を更新
+             */
+            function updateRadioStyles(groupName) {
+                const radiosInGroup = document.querySelectorAll(`input[type="radio"][name="${groupName}"]`);
+                radiosInGroup.forEach(radio => {
+                    const label = radio.closest('label');
+                    if (label) {
+                        label.classList.toggle('is-selected', radio.checked);
+                    }
+                });
+            }
+            
+            const allRadios = document.querySelectorAll('.radio-group input[type="radio"]');
+            allRadios.forEach(radio => {
+                radio.addEventListener('change', function() {
+                    // 1. 選択した項目の背景色を変更
+                    updateRadioStyles(this.name);
+                    
+                    // 2. 親コンテナの.is-invalid（赤文字）を解除
+                    const parentContainer = this.closest('.question') || this.closest('.form-group');
+                    if (parentContainer) {
+                        parentContainer.classList.remove('is-invalid');
+                    }
+                });
+                
+                // ページロード時に、ブラウザが保持している選択状態を反映
+                if (radio.checked) {
+                    updateRadioStyles(radio.name);
+                }
+            });
+            // ▲▲▲
+
+
             /**
              * ナビゲーションボタンとプログレスバーの状態を更新する
+             * ▼▼▼ 修正: setInitialValidationState を呼び出すよう変更 ▼▼▼
              */
             function updateNavigation() {
                 // ページ表示
                 pages.forEach((page, index) => {
-                    page.classList.toggle('active', (index + 1) === currentPage);
+                    const isActive = (index + 1) === currentPage;
+                    page.classList.toggle('active', isActive);
+                    
+                    // ▼▼▼ ページが表示された瞬間に、そのページの赤文字（未選択）状態をセットする ▼▼▼
+                    if (isActive) {
+                        setInitialValidationState(page);
+                    }
                 });
 
                 // ボタン表示
@@ -538,7 +618,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             /**
              * 現在のページのバリデーションを実行する
-             * ▼▼▼ 修正済みの関数 ▼▼▼
+             * （「次へ」ボタンクリック時に使用）
              */
             function validateCurrentPage() {
                 const activePage = document.querySelector(`.form-page[data-page="${currentPage}"]`);
@@ -546,34 +626,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 let firstInvalid = null;
 
+                // 念のため、現在ページの赤文字状態をリセット
+                activePage.querySelectorAll('.question.is-invalid').forEach(q => q.classList.remove('is-invalid'));
+                activePage.querySelectorAll('.form-group.is-invalid').forEach(fg => fg.classList.remove('is-invalid'));
+
                 // --- ラジオボタンのチェック ---
                 const radioGroupNames = new Set();
-                // 1. 現在のページにある必須ラジオボタンの「名前」をすべて集める
                 activePage.querySelectorAll('input[type="radio"][required]').forEach(radio => {
                     radioGroupNames.add(radio.name);
                 });
 
-                // 2. 集めた名前ごとに、グループのどれかがチェックされているか確認
                 radioGroupNames.forEach(name => {
-                    // ★重要: health_check_year のように disabled の場合はチェックしない
                     const firstRadio = activePage.querySelector(`input[name="${name}"]`);
-                    if (firstRadio && firstRadio.disabled) {
-                        return; // このグループはバリデーション対象外
-                    }
+                    if (firstRadio && firstRadio.disabled) return;
 
                     const anyChecked = activePage.querySelector(`input[name="${name}"]:checked`);
                     if (!anyChecked) {
-                        // 3. どのボタンもチェックされていなければ、バリデーションエラー
-                        const radioElement = activePage.querySelector(`input[name="${name}"]`);
+                        const radioElement = firstRadio; 
                         if (radioElement) {
-                            // ブラウザ標準のエラー表示を試みる
                             try {
-                                radioElement.reportValidity();
+                                radioElement.reportValidity(); // ブラウザ標準のポップアップ
                             } catch (e) {
-                                // 独自のアラート
                                 console.warn(`Validation failed for: ${name}`);
                             }
                             if (!firstInvalid) firstInvalid = radioElement;
+
+                            // 親コンテナに .is-invalid を追加（ラベルを赤にする）
+                            const parentContainer = radioElement.closest('.question') || radioElement.closest('.form-group');
+                            if (parentContainer) {
+                                parentContainer.classList.add('is-invalid');
+                            }
                         }
                     }
                 });
@@ -598,7 +680,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 return true;
             }
-            // ▲▲▲ 修正済みの関数 ▲▲▲
 
 
             // 質問の選択肢の値を表示用のテキストに変換するための対応表
@@ -626,7 +707,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 q18: { '1': '毎日', '2': '時々', '3': 'ほとんど飲まない（飲めない）' },
                 q19: { '1': '1合未満', '2': '1~2合未満', '3': '2~3合未満', '4': '3合以上' },
                 q20: { '1': 'はい', '2': 'いいえ' },
-                q21: { '1': '① 改善するつもりはない', '2': '② 改善するつもりである（概ね6か月以内）', '3': '③ 近いうちに（概ね1か月以内）改善するつもりであり、少しずつ始めている', '4': '④ 既に改善に取り組んでいる（6か月未満）', '5': '⑤ 既に改善に取り組んでいる（6か月以上）' },
+                q21: { '1': '① 改善するつもりはない', '2': '② 改善するつもりである（概ね6か月以内）', '3': '③ 近いうちに（概ね1か月以内）改善するつもりであり、少しずつ始めている', '4.': '④ 既に改善に取り組んでいる（6か月未満）', '5': '⑤ 既に改善に取り組んでいる（6か月以上）' },
                 q22: { '1': 'はい', '2': 'いいえ' }
             };
 
@@ -784,7 +865,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             });
 
-            // 初期表示
+            // ▼▼▼ 修正: 初期表示時に updateNavigation() を呼び出す ▼▼▼
+            // これにより、最初のページの赤文字状態がセットされます
             updateNavigation();
         });
     </script>

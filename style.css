@@ -292,7 +292,7 @@ body {
     cursor: pointer;
 }
 
-.radio-group label:has(input[type="radio"]:checked) {
+.radio-group label.is-selected {
     background: #667eea;
     color: white;
     border-color: #667eea;
@@ -690,10 +690,18 @@ input:invalid:focus, select:invalid:focus, textarea:invalid:focus {
     box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.2);
 }
 
-/* 必須ラジオボタンの親をハイライト */
-.question:has(input[type="radio"][required]:invalid) > label {
+/* 必須ラジオボタンの親（.question）のラベルをハイライト (JS制御) */
+.question.is-invalid > label {
     color: #dc3545;
 }
+
+/* ▼▼▼ 追加 ▼▼▼ */
+/* 必須ラジオボタンの親（.form-group）のラベルをハイライト (JS制御) */
+.form-group.is-invalid > label {
+    color: #dc3545;
+}
+/* ▲▲▲ 追加ここまで ▲▲▲ */
+
 
 /* admin.php のログインアイコン用 */
 .login-icon {

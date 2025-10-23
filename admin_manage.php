@@ -49,8 +49,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>管理者設定</title>
-    <link rel="stylesheet" href="style.css">
-</head>
+    <link rel="stylesheet" href="admin_manage_style.css">
+    </head>
 <body class="dashboard-page">
     <div class="container">
         <header class="header">
@@ -124,5 +124,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </form>
         </div>
     </div>
-</body>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            /**
+             * ラジオボタンのスタイルを更新する
+             * @param {string} groupName - ラジオボタンのname属性
+             */
+            function updateRadioStyles(groupName) {
+                // name属性が一致するラジオボタンをすべて取得
+                const radiosInGroup = document.querySelectorAll(`.radio-group input[name="${groupName}"]`);
+                radiosInGroup.forEach(radio => {
+                    const label = radio.closest('label');
+                    if (label) {
+                        // radio.checked が true なら .is-selected を追加, false なら削除
+                        label.classList.toggle('is-selected', radio.checked);
+                    }
+                });
+            }
+
+            // このページのラジオボタン（.radio-group 内）をすべて取得
+            const allFormRadios = document.querySelectorAll('.radio-group input[type="radio"]');
+            const radioGroups = new Set(); // name属性を管理 (例: health_check_year, health_check_season)
+
+            allFormRadios.forEach(radio => {
+                radioGroups.add(radio.name); // name属性をセットに保存
+
+                // 1. ラジオボタンが変更されたら、そのグループのスタイルを更新
+                radio.addEventListener('change', function() {
+                    updateRadioStyles(this.name);
+                });
+            });
+
+            // 2. ページロード時に、チェックされている項目のスタイルを初期設定
+            // (PHPによって 'checked' が付与されているため)
+            radioGroups.forEach(name => {
+                updateRadioStyles(name);
+            });
+        });
+    </script>
+    </body>
 </html>

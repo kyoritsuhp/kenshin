@@ -1,0 +1,178 @@
+/*
+ * admin.php 専用スタイル (admin_style.css)
+ */
+
+/* ===============================================
+   共通スタイル (ログイン画面用抜粋)
+   =============================================== */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', 'Hiragino Sans', 'Meiryo', sans-serif;
+    font-size: 11px;
+    line-height: 1.4;
+    background: #FFFFFF;
+    min-height: 100vh;
+    padding: 50px 10px;
+    overflow-x: hidden;
+}
+
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 5px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+/* ===============================================
+   admin.php (管理者ログイン画面) のスタイル
+   =============================================== */
+.login-container {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #FFFFFF;
+    min-height: calc(100vh - 100px);
+}
+
+.login-box {
+    background: white;
+    padding: 40px;
+    border-radius: 15px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+    transform: scale(1.25);
+    transform-origin: center center;
+}
+
+.login-box h2 {
+    margin-bottom: 30px;
+    color: #495057;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.login-box .form-group {
+    text-align: left;
+    margin-bottom: 20px;
+}
+
+/* ★ style.cssから .form-group input[type="password"] をコピーし、.form-controlに統合 */
+.login-box .form-control {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    font-size: 13px;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.login-box .form-control:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.25);
+}
+
+.login-box .btn {
+    width: 100%;
+    padding: 12px;
+    font-size: 14px;
+    margin-top: 10px;
+}
+
+.back-link {
+    display: inline-block;
+    margin-top: 20px;
+    color: #6c757d;
+    text-decoration: none;
+    font-size: 12px;
+    transition: color 0.3s ease;
+}
+
+.back-link:hover {
+    color: #495057;
+    text-decoration: underline;
+}
+
+.alert { 
+    padding: 12px 15px; 
+    border-radius: 6px; 
+    margin-bottom: 20px; 
+    display: flex; 
+    align-items: center; 
+    gap: 8px; 
+    text-align: left;
+}
+
+.alert-error { 
+    background: #f8d7da; 
+    color: #721c24; 
+    border: 1px solid #f5c6cb; 
+}
+
+/* admin.php のログインアイコン用 */
+.login-icon {
+    width: 1.5em;
+    height: 1.5em;
+    vertical-align: -0.15em;
+    margin-right: 2px;
+}
+
+/* ログインボタン */
+.btn-icon-login {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    background-color: currentColor; 
+    margin-right: 2px;
+    vertical-align: -0.15em; 
+    mask-image: url(/img/common_login.svg);
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    -webkit-mask-image: url(/img/common_login.svg);
+    -webkit-mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+}
+
+/* 問診票入力画面に戻る 矢印 */
+.btn-icon-back {
+    display: inline-block;
+    width: 1em;
+    height: 1em;
+    background-color: currentColor; 
+    margin-right: 1px;
+    vertical-align: -0.15em;
+    mask-image: url(/img/common_arrow-left.svg);
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    -webkit-mask-image: url(/img/common_arrow-left.svg);
+    -webkit-mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+}

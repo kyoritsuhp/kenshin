@@ -41,8 +41,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>管理者ログイン - 健診問診票</title>
-    <link rel="stylesheet" href="style.css">
-</head>
+    <link rel="stylesheet" href="admin_style.css">
+    </head>
 <body>
     <div class="login-container">
         <div class="login-box">
