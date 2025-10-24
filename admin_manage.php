@@ -2,7 +2,19 @@
 session_start();
 
 // ログインチェック
-if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
+// 1. 健診システムのセッション (admin_logged_in)
+$is_kenshin_admin = (
+    isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true
+);
+
+// 2. ポータルからの特権アクセス (admin=1 または kenshin=1) - 追加
+$is_portal_privileged = (
+    isset($_SESSION['user_id']) && // ポータルのログインID
+    ((isset($_SESSION['admin']) && $_SESSION['admin'] == 1) || (isset($_SESSION['kenshin']) && $_SESSION['kenshin'] == 1))
+);
+
+// どちらの権限も持っていない場合、ログイン画面に戻す - 修正
+if (!$is_kenshin_admin && !$is_portal_privileged) {
     header('Location: admin.php');
     exit;
 }
@@ -22,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $year = $_POST['health_check_year'] ?? null;
     $season = $_POST['health_check_season'] ?? null;
     $enable_defaults = isset($_POST['enable_defaults']);
-    
+
     // ▼▼▼ 追加 ▼▼▼
     // ポータルサイトへのリンク表示設定を取得
     $show_portal_link = isset($_POST['show_portal_link']);
@@ -67,20 +79,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <?php endif; ?>
 
             <form method="POST" action="">
-            
+
                 <div class="section">
                     <h2>ポータルサイト連携設定</h2>
                     <div class="form-group">
                         <label>
-                            <input type="checkbox" name="show_portal_link" value="1" <?php 
+                            <input type="checkbox" name="show_portal_link" value="1" <?php
                                 // デフォルトは表示(true)
-                                echo ($defaults['show_portal_link'] ?? true) ? 'checked' : ''; 
+                                echo ($defaults['show_portal_link'] ?? true) ? 'checked' : '';
                             ?>>
                             ポータルサイトのメニューに「健診問診票」リンクを表示する
                         </label>
                     </div>
                 </div>
-                
+
                 <div class="section">
                     <h2>健康診断のデフォルト設定</h2>
                     <p style="font-size: 11px; color: #666; margin-bottom: 15px;">

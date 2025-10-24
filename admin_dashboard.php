@@ -2,7 +2,19 @@
 session_start();
 
 // ログインチェック
-if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
+// 1. 健診システムのセッション (admin_logged_in)
+$is_kenshin_admin = (
+    isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true
+);
+
+// 2. ポータルからの特権アクセス (admin=1 または kenshin=1) - 修正
+$is_portal_privileged = (
+    isset($_SESSION['user_id']) && // ポータルのログインID
+    ((isset($_SESSION['admin']) && $_SESSION['admin'] == 1) || (isset($_SESSION['kenshin']) && $_SESSION['kenshin'] == 1))
+);
+
+// どちらの権限も持っていない場合、ログイン画面に戻す - 修正
+if (!$is_kenshin_admin && !$is_portal_privileged) {
     header('Location: admin.php');
     exit;
 }
@@ -28,13 +40,13 @@ $season_filter = $_GET['season'] ?? 'all';
 // ▼▼▼ ソート処理を追加 ▼▼▼
 // ホワイトリスト方式で許可するカラムを定義
 $allowed_sort_columns = [
-    'response_id', 
-    'staff_id', 
-    'staff_name', 
-    'department', 
-    'facility_name', 
-    'health_check_year', 
-    'health_check_season', 
+    'response_id',
+    'staff_id',
+    'staff_name',
+    'department',
+    'facility_name',
+    'health_check_year',
+    'health_check_season',
     'submitted_at'
 ];
 $sort_by = $_GET['sort_by'] ?? 'submitted_at';
@@ -76,7 +88,7 @@ if (!empty($where_clauses)) {
 
 // ▼▼▼ ソート順を動的に変更 ▼▼▼
 $sql .= " ORDER BY $sort_by $sort_order";
-// ▲▲▲ ソート順を動的に変更 ▼▼▲
+// ▲▲▲ ソート順を動的に変更 ▲▲▲
 
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
@@ -92,7 +104,7 @@ if (!empty($export_query_string)) {
 // ソート用のリンクとインジケーター（▲▼）を生成する関数
 function get_sort_link($column_name, $display_name, $current_sort_by, $current_sort_order, $base_params) {
     // $current_sort_order は DB接続時に 'ASC' または 'DESC' に正規化されている
-    
+
     $next_sort_order = 'asc'; // デフォルトのリンク先 (ソートされていない列をクリックした時)
     $indicator = '';
 
@@ -101,7 +113,7 @@ function get_sort_link($column_name, $display_name, $current_sort_by, $current_s
         // ★修正点: $current_sort_order が 'asc' ではなく 'ASC' (大文字) かをチェック
         if ($current_sort_order === 'ASC') {
             // 現在 '昇順' なので、次のリンクは '降順 (desc)' にする
-            $next_sort_order = 'desc'; 
+            $next_sort_order = 'desc';
             $indicator = ' <span class="sort-asc">▲</span>';
         } else {
             // 現在 '降順 (DESC)' なので、次のリンクは '昇順 (asc)' にする
@@ -114,9 +126,9 @@ function get_sort_link($column_name, $display_name, $current_sort_by, $current_s
     $link_params = $base_params;
     $link_params['sort_by'] = $column_name;
     $link_params['sort_order'] = $next_sort_order;
-    
+
     $url = 'admin_dashboard.php?' . http_build_query($link_params);
-    
+
     // HTMLリンクを返す
     return '<a href="' . htmlspecialchars($url) . '">' . htmlspecialchars($display_name) . $indicator . '</a>';
 }
@@ -134,7 +146,7 @@ if (isset($_GET['logout'])) {
 // フィルター用のユニークな値を取得
 $db_years = $pdo->query("SELECT DISTINCT health_check_year FROM questionnaire_responses")->fetchAll(PDO::FETCH_COLUMN);
 // フィルターに静的に追加したい年
-$static_years_to_add = ['2026']; 
+$static_years_to_add = ['2026'];
 // DBの結果と静的な年をマージし、重複を削除
 $years = array_unique(array_merge($db_years, $static_years_to_add));
 // 降順（新しい年が上）にソート
@@ -161,7 +173,7 @@ rsort($years, SORT_NUMERIC);
         </header>
 
         <div style="padding: 20px;">
-            
+
             <div class="filter-section">
                 <form method="GET" action="admin_dashboard.php">
                     <div class="filter-group">
@@ -174,7 +186,7 @@ rsort($years, SORT_NUMERIC);
                             <label><input type="radio" name="facility" value="かがやき2号館" <?php echo ($facility_filter == 'かがやき2号館') ? 'checked' : ''; ?>> かがやき2号館</label>
                         </div>
                     </div>
-                    
+
                     <div class="filter-row">
                         <div class="filter-group">
                             <strong>年度</strong>
