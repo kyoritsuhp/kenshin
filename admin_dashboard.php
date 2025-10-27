@@ -42,6 +42,7 @@ $season_filter = $_GET['season'] ?? 'all';
 $allowed_sort_columns = [
     'response_id',
     'staff_id',
+    'karte_id', // ★ 追加
     'staff_name',
     'department',
     'facility_name',
@@ -228,7 +229,7 @@ rsort($years, SORT_NUMERIC);
                         <tr>
                             <th><?php echo get_sort_link('response_id', 'ID', $sort_by, $sort_order, $query_string_params); ?></th>
                             <th><?php echo get_sort_link('staff_id', '職員ID', $sort_by, $sort_order, $query_string_params); ?></th>
-                            <th><?php echo get_sort_link('facility_name', '施設名', $sort_by, $sort_order, $query_string_params); ?></th>
+                            <th><?php echo get_sort_link('karte_id', 'カルテID', $sort_by, $sort_order, $query_string_params); ?></th> <th><?php echo get_sort_link('facility_name', '施設名', $sort_by, $sort_order, $query_string_params); ?></th>
                             <th><?php echo get_sort_link('health_check_year', '年度', $sort_by, $sort_order, $query_string_params); ?></th>
                             <th><?php echo get_sort_link('health_check_season', '時期', $sort_by, $sort_order, $query_string_params); ?></th>
                             <th><?php echo get_sort_link('department', '部署', $sort_by, $sort_order, $query_string_params); ?></th>
@@ -239,8 +240,7 @@ rsort($years, SORT_NUMERIC);
                     <tbody>
                         <?php if (empty($responses)): ?>
                         <tr>
-                            <td colspan="8" style="text-align: center; padding: 20px;">
-                                該当するデータがありません。
+                            <td colspan="9" style="text-align: center; padding: 20px;"> 該当するデータがありません。
                             </td>
                         </tr>
                         <?php endif; ?>
@@ -248,7 +248,7 @@ rsort($years, SORT_NUMERIC);
                         <tr>
                             <td><a href="admin_index.php?id=<?php echo htmlspecialchars($row['response_id']); ?>"><?php echo htmlspecialchars($row['response_id']); ?></a></td>
                             <td><?php echo htmlspecialchars($row['staff_id']); ?></td>
-                            <td><?php echo htmlspecialchars($row['facility_name']); ?></td>
+                            <td><?php echo htmlspecialchars($row['karte_id']); ?></td> <td><?php echo htmlspecialchars($row['facility_name']); ?></td>
                              <td><?php echo htmlspecialchars($row['health_check_year']); ?></td>
                             <td><?php echo htmlspecialchars($row['health_check_season']); ?></td>
                              <td><?php echo htmlspecialchars($row['department']); ?></td>

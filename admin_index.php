@@ -50,7 +50,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete'])) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['delete'])) {
     try {
         $sql = "UPDATE questionnaire_responses SET
-            staff_id = :staff_id, staff_name = :staff_name, department = :department,
+            staff_id = :staff_id, karte_id = :karte_id, staff_name = :staff_name, department = :department,
             q1_blood_pressure_med = :q1, q1_medicine_name = :q1_medicine_name,
             q2_insulin_med = :q2, q2_medicine_name = :q2_medicine_name,
             q3_cholesterol_med = :q3, q3_medicine_name = :q3_medicine_name,
@@ -65,6 +65,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['delete'])) {
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
             ':staff_id' => $_POST['staff_id'] ?? null,
+            ':karte_id' => $_POST['karte_id'] ?? null,
             ':staff_name' => $_POST['staff_name'] ?? null,
             ':department' => $_POST['department'] ?? null,
             ':q1' => $_POST['q1'] ?? null,
@@ -144,6 +145,10 @@ try {
                 <div class="form-group">
                     <label for="staff_id">職員ID</label>
                     <input type="text" id="staff_id" name="staff_id" value="<?php echo htmlspecialchars($response['staff_id']); ?>">
+                </div>
+                <div class="form-group">
+                    <label for="karte_id">カルテID</label>
+                    <input type="text" id="karte_id" name="karte_id" value="<?php echo htmlspecialchars($response['karte_id'] ?? ''); ?>">
                 </div>
                 <div class="form-group">
                     <label for="staff_name">氏名</label>

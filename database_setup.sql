@@ -12,7 +12,7 @@ CREATE TABLE IF NOT EXISTS users (
 -- 問診票回答テーブル作成
 CREATE TABLE IF NOT EXISTS questionnaire_responses (
     response_id INT AUTO_INCREMENT PRIMARY KEY,
-    staff_id VARCHAR(50) NOT NULL,
+    staff_id VARCHAR(5) NOT NULL,
     staff_name VARCHAR(100),
     department VARCHAR(100),
     
@@ -58,3 +58,6 @@ CREATE TABLE IF NOT EXISTS questionnaire_responses (
     INDEX idx_staff_id (staff_id),
     INDEX idx_submitted_at (submitted_at)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+ALTER TABLE questionnaire_responses
+ADD COLUMN karte_id VARCHAR(8) NULL COMMENT 'カルテID' AFTER staff_id;

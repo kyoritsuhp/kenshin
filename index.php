@@ -1,7 +1,7 @@
 <?php
 session_start();
 
-// データベース接続
+// データベース接続 (monshin)
 $db_host = 'localhost';
 $db_name = 'monshin';
 $db_user = 'root';
@@ -27,7 +27,9 @@ $isFixed = ($defaults['enabled'] ?? false);
 
 // フォーム送信処理
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $staff_id = trim($_POST['staff_id'] ?? '');
+    
+    // フォームからの値を取得
+    $staff_id = trim($_POST['staff_id'] ?? ''); // (例: "100")
     $staff_name = trim($_POST['staff_name'] ?? '');
     $department = trim($_POST['department'] ?? '');
     $facility_name = trim($_POST['facility_name'] ?? ''); // ★ 追加
@@ -41,13 +43,65 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $health_check_season = trim($_POST['health_check_season'] ?? '');
     }
 
-    // ▼▼▼ 職員IDが必須のチェックを削除 ▼▼▼
-    // if (empty($staff_id)) {
-    //     $error = '職員IDを入力してください。';
-    // } else {
+    // ▼▼▼ 【ご要望のロジック】人事DBとの照合 ▼▼▼
+    $karte_id_to_write = null; // 1. monshin DBに書き込む値を初期化 (デフォルトは null)
+
+    // 2. フォームで staff_id が入力されている場合のみ照合を実行
+    if (!empty($staff_id)) {
+        
+        // ▼▼▼ 【ゼロパディング処理】 ▼▼▼
+        // 5桁になるよう、左側を '0' で埋める (例: "100" -> "000100")
+        $staff_id_padded = str_pad($staff_id, 5, "0", STR_PAD_LEFT);
+        // ▲▲▲
+
+        try {
+            // 3. 人事データベース(jinji)への接続情報
+            // (jinji/config.php や kenshin/admin.php のDB接続情報を参考にしています)
+            $jinji_db_host = 'localhost';
+            $jinji_db_name = 'jinji';
+            $jinji_db_user = 'root';
+            $jinji_db_pass = ''; // (monshin DBと同じと仮定)
+
+            // 3. データベース「jinji」に接続
+            $jinji_pdo = new PDO("mysql:host=$jinji_db_host;dbname=$jinji_db_name;charset=utf8mb4", $jinji_db_user, $jinji_db_pass);
+            $jinji_pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+
+        // ... (L71)
+
+            // 4. jinji.staff.staff_id と ★パディング後の staff_id★ を照合 (修正)
+            $sql_jinji = "SELECT karte_id FROM staff WHERE staff_id = :staff_id_check";
+            $stmt_jinji = $jinji_pdo->prepare($sql_jinji);
+            $stmt_jinji->execute([':staff_id_check' => $staff_id_padded]); // (例: "10620") (修正)
+            
+            // 5. fetch() を使って一致するレコードがあるか確認
+            $matched_staff = $stmt_jinji->fetch(PDO::FETCH_ASSOC);
+
+            // 5. 一致するレコードが見つかった場合
+            if ($matched_staff) {
+                // ★ DBから取得した karte_id ★ を書き込み対象とする (修正)
+                $karte_id_to_write = $matched_staff['karte_id']; // (例: DBから見つかった "00046618" など)
+            }
+            // 6. 一致しなかった場合、 $karte_id_to_write は null のまま
+
+// ... (L84)
+            // 6. 一致しなかった場合、 $karte_id_to_write は null のまま
+
+            $jinji_pdo = null; // 接続を閉じる
+
+        } catch(PDOException $e) {
+            // 人事DBへの接続またはクエリに失敗した場合
+            // フォームの送信自体をエラーとする
+            $error = '人事データベースとの照合中にエラーが発生しました: ' . $e->getMessage();
+        }
+    }
+    // ▲▲▲ 照合ロジック終了 ▲▲▲
+
+    // (上記で人事DB照合エラーが発生していない場合のみ)問診DBへの書き込みを実行
+    if (empty($error)) {
         try {
             $sql = "INSERT INTO questionnaire_responses (
                 staff_id, staff_name, department, facility_name, health_check_year, health_check_season,
+                karte_id,
                 q1_blood_pressure_med, q1_medicine_name,
                 q2_insulin_med, q2_medicine_name,
                 q3_cholesterol_med, q3_medicine_name,
@@ -59,6 +113,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 q21_improvement_intention, q22_guidance_use
             ) VALUES (
                 :staff_id, :staff_name, :department, :facility_name, :health_check_year, :health_check_season,
+                :karte_id,
                 :q1, :q1_medicine_name,
                 :q2, :q2_medicine_name,
                 :q3, :q3_medicine_name,
@@ -67,13 +122,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             )";
 
             $stmt = $pdo->prepare($sql);
+            
+            // ★ :karte_id に照合結果 ($karte_id_to_write) をバインド
             $stmt->execute([
-                ':staff_id' => $staff_id, // 空の可能性あり
+                ':staff_id' => $staff_id, // ★ (例: "100") パディング前の元の値
                 ':staff_name' => $staff_name,
                 ':department' => $department,
-                ':facility_name' => $facility_name, // ★ 追加
+                ':facility_name' => $facility_name,
                 ':health_check_year' => $health_check_year,
                 ':health_check_season' => $health_check_season,
+                ':karte_id' => $karte_id_to_write, // ★ (例: "000100") パディング後の照合済みID (or null)
                 ':q1' => $_POST['q1'] ?? null,
                 ':q1_medicine_name' => $_POST['q1_medicine_name'] ?? null,
                 ':q2' => $_POST['q2'] ?? null,
@@ -105,8 +163,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } catch(PDOException $e) {
             $error = '送信中にエラーが発生しました: ' . $e->getMessage();
         }
-    // } // 必須チェックを削除したため、閉じ括弧 } も削除
-    // ▲▲▲ 職員IDが必須のチェックを削除 ▲▲▲
+    }
 }
 ?>
 <!DOCTYPE html>
@@ -115,8 +172,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>職員健康診断 問診票</title>
+  
     <link rel="stylesheet" href="index_style.css">
-    </head>
+
+</head>
 <body>
     <div class="container">
         <header class="header">
@@ -444,10 +503,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <div class="navigation-buttons">
                 <button type="button" id="backBtn" class="btn btn-secondary">戻る</button>
-                <button type="button" id="nextBtn" class="btn btn-primary">次へ</button>
-                <button type="submit" id="submitBtn" class="btn btn-primary"><span class="btn-icon-plane"></span> 送信する</button>
+                
+                <div class="navigation-buttons-right">
+                    <button type="button" id="nextBtn" class="btn btn-primary">次へ</button>
+                    <button type="submit" id="submitBtn" class="btn btn-primary"><span class="btn-icon-plane"></span> 送信する</button>
+                </div>
             </div>
-        </form>
+            </form>
         <?php endif; // $message がない場合のみフォーム表示 ?>
 
         <div class="admin-link">
@@ -591,7 +653,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 });
 
-                // ボタン表示
+                // ボタン表示 (CSS側も visibility を使うように変更したため、.visibleクラスの付け外しはそのまま)
                 backBtn.classList.toggle('visible', currentPage > 1);
                 nextBtn.classList.toggle('visible', currentPage < totalPages);
                 submitBtn.classList.toggle('visible', currentPage === totalPages);
