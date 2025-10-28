@@ -37,6 +37,12 @@ $facility_filter = $_GET['facility'] ?? 'all';
 $year_filter = $_GET['year'] ?? 'all';
 $season_filter = $_GET['season'] ?? 'all';
 
+// ▼▼▼ 検索フォーム処理を追加 ▼▼▼
+$search_staff_id = trim($_GET['search_staff_id'] ?? '');
+$search_karte_id = trim($_GET['search_karte_id'] ?? '');
+$search_staff_name = trim($_GET['search_staff_name'] ?? '');
+// ▲▲▲ 検索フォーム処理を追加 ▲▲▲
+
 // ▼▼▼ ソート処理を追加 ▼▼▼
 // ホワイトリスト方式で許可するカラムを定義
 $allowed_sort_columns = [
@@ -82,6 +88,26 @@ if ($season_filter !== 'all') {
     $query_string_params['season'] = $season_filter;
 }
 
+// ▼▼▼ 検索条件をWHERE句に追加 ▼▼▼
+if (!empty($search_staff_id)) {
+    // staff_id は 0 埋めされている可能性があるため、前方一致ではなく部分一致(LIKE)を使用
+    $where_clauses[] = "staff_id LIKE :staff_id";
+    $params[':staff_id'] = '%' . $search_staff_id . '%';
+    $query_string_params['search_staff_id'] = $search_staff_id;
+}
+if (!empty($search_karte_id)) {
+    $where_clauses[] = "karte_id LIKE :karte_id";
+    $params[':karte_id'] = '%' . $search_karte_id . '%';
+    $query_string_params['search_karte_id'] = $search_karte_id;
+}
+if (!empty($search_staff_name)) {
+    $where_clauses[] = "staff_name LIKE :staff_name";
+    $params[':staff_name'] = '%' . $search_staff_name . '%';
+    $query_string_params['search_staff_name'] = $search_staff_name;
+}
+// ▲▲▲ 検索条件をWHERE句に追加 ▲▲▲
+
+
 $sql = $sql_base;
 if (!empty($where_clauses)) {
     $sql .= " WHERE " . implode(" AND ", $where_clauses);
@@ -95,7 +121,7 @@ $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $responses = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// エクスポート用のクエリ文字列 (フィルターのみ)
+// エクスポート用のクエリ文字列 (フィルター + 検索)
 $export_query_string = http_build_query($query_string_params);
 if (!empty($export_query_string)) {
     $export_query_string = '?' . $export_query_string;
@@ -123,7 +149,7 @@ function get_sort_link($column_name, $display_name, $current_sort_by, $current_s
         }
     }
 
-    // 既存のフィルターパラメータにソートパラメータを追加
+    // 既存のフィルター/検索パラメータにソートパラメータを追加
     $link_params = $base_params;
     $link_params['sort_by'] = $column_name;
     $link_params['sort_order'] = $next_sort_order;
@@ -207,8 +233,23 @@ rsort($years, SORT_NUMERIC);
                             </div>
                         </div>
                     </div>
+                    
+                    <div class="search-container">
+                        <div class="search-group">
+                            <label for="search_staff_id">職員ID</label>
+                            <input type="text" id="search_staff_id" name="search_staff_id" value="<?php echo htmlspecialchars($search_staff_id); ?>" placeholder="職員ID (部分一致)">
+                        </div>
+                        <div class="search-group">
+                            <label for="search_karte_id">カルテID</label>
+                            <input type="text" id="search_karte_id" name="search_karte_id" value="<?php echo htmlspecialchars($search_karte_id); ?>" placeholder="カルテID (部分一致)">
+                        </div>
+                        <div class="search-group">
+                            <label for="search_staff_name">氏名</label>
+                            <input type="text" id="search_staff_name" name="search_staff_name" value="<?php echo htmlspecialchars($search_staff_name); ?>" placeholder="氏名 (部分一致)">
+                        </div>
+                    </div>
                     <div class="filter-buttons">
-                        <button type="submit" class="btn btn-primary btn-small">絞り込み</button>
+                        <button type="submit" class="btn btn-primary btn-small">絞り込み/検索</button>
                         <a href="admin_dashboard.php" class="btn btn-secondary btn-small" style="text-decoration: none;">リセット</a>
                     </div>
                 </form>

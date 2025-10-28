@@ -29,10 +29,14 @@ $isFixed = ($defaults['enabled'] ?? false);
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // フォームからの値を取得
-    $staff_id = trim($_POST['staff_id'] ?? ''); // (例: "100")
+    $staff_id = trim($_POST['staff_id'] ?? ''); // (例: "100" や "１００")
+    
+    // ★ 修正: 全角の英数字が入力された場合、半角に変換する
+    $staff_id = mb_convert_kana($staff_id, "a"); // (例: "１００" -> "100")
+
     $staff_name = trim($_POST['staff_name'] ?? '');
     $department = trim($_POST['department'] ?? '');
-    $facility_name = trim($_POST['facility_name'] ?? ''); // ★ 追加
+    $facility_name = trim($_POST['facility_name'] ?? ''); 
 
     // デフォルト設定が有効な場合は、POSTされた値ではなく設定値を使用
     if ($isFixed) {
@@ -43,55 +47,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $health_check_season = trim($_POST['health_check_season'] ?? '');
     }
 
-    // ▼▼▼ 【ご要望のロジック】人事DBとの照合 ▼▼▼
-    $karte_id_to_write = null; // 1. monshin DBに書き込む値を初期化 (デフォルトは null)
+// ▼▼▼ 【ご要望のロジック】人事DBとの照合 ▼▼▼
+    $karte_id_to_write = null; 
+    $jinji_pdo = null; 
 
-    // 2. フォームで staff_id が入力されている場合のみ照合を実行
+    // ★ 修正: 5桁パディング済みのIDを保存する変数を定義
+    $staff_id_padded = !empty($staff_id) ? str_pad($staff_id, 5, "0", STR_PAD_LEFT) : $staff_id;
+
     if (!empty($staff_id)) {
         
-        // ▼▼▼ 【ゼロパディング処理】 ▼▼▼
-        // 5桁になるよう、左側を '0' で埋める (例: "100" -> "000100")
-        $staff_id_padded = str_pad($staff_id, 5, "0", STR_PAD_LEFT);
-        // ▲▲▲
+        // $staff_id_padded は上で定義済み
 
         try {
-            // 3. 人事データベース(jinji)への接続情報
-            // (jinji/config.php や kenshin/admin.php のDB接続情報を参考にしています)
             $jinji_db_host = 'localhost';
             $jinji_db_name = 'jinji';
             $jinji_db_user = 'root';
-            $jinji_db_pass = ''; // (monshin DBと同じと仮定)
+            $jinji_db_pass = ''; 
 
-            // 3. データベース「jinji」に接続
             $jinji_pdo = new PDO("mysql:host=$jinji_db_host;dbname=$jinji_db_name;charset=utf8mb4", $jinji_db_user, $jinji_db_pass);
             $jinji_pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-        // ... (L71)
-
-            // 4. jinji.staff.staff_id と ★パディング後の staff_id★ を照合 (修正)
             $sql_jinji = "SELECT karte_id FROM staff WHERE staff_id = :staff_id_check";
             $stmt_jinji = $jinji_pdo->prepare($sql_jinji);
-            $stmt_jinji->execute([':staff_id_check' => $staff_id_padded]); // (例: "10620") (修正)
+            $stmt_jinji->execute([':staff_id_check' => $staff_id_padded]); // ★ パディング済みのIDで照合
             
-            // 5. fetch() を使って一致するレコードがあるか確認
             $matched_staff = $stmt_jinji->fetch(PDO::FETCH_ASSOC);
 
-            // 5. 一致するレコードが見つかった場合
             if ($matched_staff) {
-                // ★ DBから取得した karte_id ★ を書き込み対象とする (修正)
-                $karte_id_to_write = $matched_staff['karte_id']; // (例: DBから見つかった "00046618" など)
+                $karte_id_to_write = $matched_staff['karte_id']; 
             }
-            // 6. 一致しなかった場合、 $karte_id_to_write は null のまま
-
-// ... (L84)
-            // 6. 一致しなかった場合、 $karte_id_to_write は null のまま
-
-            $jinji_pdo = null; // 接続を閉じる
-
+            
         } catch(PDOException $e) {
-            // 人事DBへの接続またはクエリに失敗した場合
-            // フォームの送信自体をエラーとする
             $error = '人事データベースとの照合中にエラーが発生しました: ' . $e->getMessage();
+        } finally {
+            if ($jinji_pdo !== null) {
+                $jinji_pdo = null; 
+            }
         }
     }
     // ▲▲▲ 照合ロジック終了 ▲▲▲
@@ -123,15 +114,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             $stmt = $pdo->prepare($sql);
             
-            // ★ :karte_id に照合結果 ($karte_id_to_write) をバインド
             $stmt->execute([
-                ':staff_id' => $staff_id, // ★ (例: "100") パディング前の元の値
+                ':staff_id' => $staff_id_padded, // ★ 修正: $staff_id_padded (パディング済みID) を登録
                 ':staff_name' => $staff_name,
                 ':department' => $department,
                 ':facility_name' => $facility_name,
                 ':health_check_year' => $health_check_year,
                 ':health_check_season' => $health_check_season,
-                ':karte_id' => $karte_id_to_write, // ★ (例: "000100") パディング後の照合済みID (or null)
+                ':karte_id' => $karte_id_to_write, 
                 ':q1' => $_POST['q1'] ?? null,
                 ':q1_medicine_name' => $_POST['q1_medicine_name'] ?? null,
                 ':q2' => $_POST['q2'] ?? null,
@@ -175,6 +165,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   
     <link rel="stylesheet" href="index_style.css">
 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+
 </head>
 <body>
     <div class="container">
@@ -214,7 +206,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             <div class="form-page active" data-page="1">
                 <div class="section">
-                    <h2>健康診断情報</h2>
+                    <h2><i class="fas fa-file-medical"></i> 健康診断情報</h2>
                     <?php if ($isFixed): ?>
                         <div class="form-group">
                             <label>年度・時期</label>
@@ -255,7 +247,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <?php endif; ?>
                 </div>
                 <div class="section">
-                    <h2>職員情報</h2>
+                    <h2><i class="fas fa-user-circle"></i> 職員情報</h2>
                     <div class="form-group">
                         <label>施設名 </label>
                         <div class="radio-group">
@@ -267,22 +259,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                     <div class="form-group">
                         <label for="staff_id">職員ID</label>
-                        <input type="text" id="staff_id" name="staff_id">
+                        <input type="text" id="staff_id" name="staff_id" value="<?php echo htmlspecialchars($staff_id ?? ''); ?>">
                     </div>
                     <div class="form-group">
                         <label for="staff_name">氏名</label>
-                        <input type="text" id="staff_name" name="staff_name">
+                        <input type="text" id="staff_name" name="staff_name" value="<?php echo htmlspecialchars($staff_name ?? ''); ?>">
                     </div>
                     <div class="form-group">
                         <label for="department">所属部署</label>
-                        <input type="text" id="department" name="department">
+                        <input type="text" id="department" name="department" value="<?php echo htmlspecialchars($department ?? ''); ?>">
                     </div>
                 </div>
             </div>
 
             <div class="form-page" data-page="2">
                 <div class="section">
-                    <h2>服薬状況</h2>
+                    <h2><i class="fas fa-pills"></i> 服薬状況</h2>
                     <div class="question">
                         <label>1. a. 血圧を下げる薬 </label>
                         <div class="radio-group">
@@ -321,7 +313,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <div class="form-page" data-page="3">
                  <div class="section">
-                    <h2>既往歴</h2>
+                    <h2><i class="fas fa-heartbeat"></i> 既往歴</h2>
                     <div class="question">
                         <label>4. 医師から、脳卒中（脳出血、脳梗塞等）にかかっているといわれたり、治療を受けたことがありますか。 </label>
                         <div class="radio-group">
@@ -355,7 +347,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <div class="form-page" data-page="4">
                 <div class="section">
-                    <h2>生活習慣</h2>
+                    <h2><i class="fas fa-walking"></i> 生活習慣</h2>
                     <div class="question">
                         <label>8. 現在、たばこを習慣的に吸っている。<br><span class="note">（※「現在、習慣的に喫煙している者」とは、「合計100本以上、又は6ヶ月以上吸っている者」であり、最近1ヶ月間も吸っている者）</span> </label>
                         <div class="radio-group">
@@ -403,7 +395,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <div class="form-page" data-page="5">
                 <div class="section">
-                    <h2>食生活</h2>
+                    <h2><i class="fas fa-utensils"></i> 食生活</h2>
                     <div class="question">
                         <label>14. 人と比較して食べる速度が速い。 </label>
                         <div class="radio-group">
@@ -438,7 +430,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <div class="form-page" data-page="6">
                 <div class="section">
-                    <h2>飲酒</h2>
+                    <h2><i class="fas fa-wine-glass-alt"></i> 飲酒</h2>
                     <div class="question">
                         <label>18. お酒（清酒、焼酎、ビール、洋酒など）を飲む頻度 </label>
                         <div class="radio-group">
@@ -458,7 +450,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                 </div>
                 <div class="section">
-                    <h2>睡眠</h2>
+                    <h2><i class="fas fa-bed"></i> 睡眠</h2>
                     <div class="question">
                         <label>20. 睡眠で休養が十分とれている。 </label>
                         <div class="radio-group">
@@ -471,7 +463,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <div class="form-page" data-page="7">
                 <div class="section">
-                    <h2>生活習慣改善について</h2>
+                    <h2><i class="fas fa-tasks"></i> 生活習慣改善について</h2>
                     <div class="question">
                         <label>21. 運動や食生活等の生活習慣を改善してみようと思いますか。 </label>
                         <div class="radio-group vertical">
@@ -494,7 +486,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <div class="form-page" data-page="8">
                 <div class="section">
-                    <h2>入力内容の確認</h2>
+                    <h2><i class="fas fa-check-circle"></i> 入力内容の確認</h2>
                     <p>以下の内容で送信します。よろしければ「送信」ボタンを押してください。</p>
                     <div id="confirmationReview">
                         </div>
@@ -564,7 +556,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             setupDynamicForm('q2', 'q2_medicine_name_group');
             setupDynamicForm('q3', 'q3_medicine_name_group');
 
-            // ▼▼▼ 修正: ページ表示時に必須項目のラベル色を（赤に）設定する関数 ▼▼▼
             /**
              * ページ内の必須ラジオ項目をチェックし、未選択なら.is-invalidを付与
              * @param {HTMLElement} pageElement - 対象のページ要素
@@ -600,9 +591,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 });
             }
-            // ▲▲▲
 
-            // ▼▼▼ 修正: ラジオボタンの選択（change）イベント ▼▼▼
             /**
              * ラジオボタン選択時のスタイル（背景色）を更新
              */
@@ -634,12 +623,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     updateRadioStyles(radio.name);
                 }
             });
-            // ▲▲▲
 
 
             /**
              * ナビゲーションボタンとプログレスバーの状態を更新する
-             * ▼▼▼ 修正: setInitialValidationState を呼び出すよう変更 ▼▼▼
              */
             function updateNavigation() {
                 // ページ表示
@@ -647,13 +634,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     const isActive = (index + 1) === currentPage;
                     page.classList.toggle('active', isActive);
                     
-                    // ▼▼▼ ページが表示された瞬間に、そのページの赤文字（未選択）状態をセットする ▼▼▼
+                    // ページが表示された瞬間に、そのページの赤文字（未選択）状態をセットする
                     if (isActive) {
                         setInitialValidationState(page);
                     }
                 });
 
-                // ボタン表示 (CSS側も visibility を使うように変更したため、.visibleクラスの付け外しはそのまま)
+                // ボタン表示
                 backBtn.classList.toggle('visible', currentPage > 1);
                 nextBtn.classList.toggle('visible', currentPage < totalPages);
                 submitBtn.classList.toggle('visible', currentPage === totalPages);
@@ -680,7 +667,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             /**
              * 現在のページのバリデーションを実行する
-             * （「次へ」ボタンクリック時に使用）
              */
             function validateCurrentPage() {
                 const activePage = document.querySelector(`.form-page[data-page="${currentPage}"]`);
@@ -748,7 +734,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             const valueMappings = {
                 health_check_year: { '2025': '2025年', '2026': '2026年', '2027': '2027年', '2028': '2028年', '2029': '2029年', '2030': '2030年' },
                 health_check_season: { '春': '春', '冬': '冬' },
-                facility_name: { '協立病院': '協立病院', '清寿園': '清寿園', 'かがやき': 'かがやき', 'かがやき2号館': 'かがやき2号館' }, // ★ 追加
+                facility_name: { '協立病院': '協立病院', '清寿園': '清寿園', 'かがやき': 'かがやき', 'かがやき2号館': 'かがやき2号館' },
                 q1: { '1': 'はい', '2': 'いいえ' },
                 q2: { '1': 'はい', '2': 'いいえ' },
                 q3: { '1': 'はい', '2': 'いいえ' },
@@ -793,7 +779,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             function getInputValue(id) {
                 const element = document.getElementById(id);
                 const value = element ? element.value.trim() : '';
-                // ▼▼▼ 職員IDが任意の入力になったため、未入力の表示を変更 ▼▼▼
                 if (id === 'staff_id' && value === '') {
                     return '未入力';
                 }
@@ -818,7 +803,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 detailsHtml += `<li><strong>職員ID:</strong> ${getInputValue('staff_id')}</li>`;
                 detailsHtml += `<li><strong>氏名:</strong> ${getInputValue('staff_name')}</li>`;
                 detailsHtml += `<li><strong>所属部署:</strong> ${getInputValue('department')}</li>`;
-                detailsHtml += `<li><strong>施設名:</strong> ${getRadioValueText('facility_name')}</li>`; // ★ 追加
+                detailsHtml += `<li><strong>施設名:</strong> ${getRadioValueText('facility_name')}</li>`; 
 
                 // ページ2
                 let q1_text = getRadioValueText('q1');
@@ -908,7 +893,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     });
 
                     form.querySelectorAll('input[required], select[required], textarea[required]').forEach(input => {
-                        // ▼▼▼ 職員ID (staff_id) はチェック対象外にする ▼▼▼
+                        // 職員ID (staff_id) は必須チェックの対象外
                         if (input.type === 'radio' || input.disabled || input.id === 'staff_id') return;
                         if (!input.checkValidity()) {
                             allValid = false;
@@ -927,8 +912,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             });
 
-            // ▼▼▼ 修正: 初期表示時に updateNavigation() を呼び出す ▼▼▼
-            // これにより、最初のページの赤文字状態がセットされます
+            // 初期表示時に updateNavigation() を呼び出す
             updateNavigation();
         });
     </script>

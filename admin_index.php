@@ -2,7 +2,19 @@
 session_start();
 
 // ログインチェック
-if (!isset($_SESSION['admin_logged_in']) || $_SESSION['admin_logged_in'] !== true) {
+// 1. 健診システムのセッション (admin_logged_in)
+$is_kenshin_admin = (
+    isset($_SESSION['admin_logged_in']) && $_SESSION['admin_logged_in'] === true
+);
+
+// 2. ポータルからの特権アクセス (admin=1 または kenshin=1)
+$is_portal_privileged = (
+    isset($_SESSION['user_id']) && // ポータルのログインID
+    ((isset($_SESSION['admin']) && $_SESSION['admin'] == 1) || (isset($_SESSION['kenshin']) && $_SESSION['kenshin'] == 1))
+);
+
+// どちらの権限も持っていない場合、ログイン画面に戻す
+if (!$is_kenshin_admin && !$is_portal_privileged) {
     header('Location: admin.php');
     exit;
 }
@@ -49,6 +61,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['delete'])) {
 // データ更新処理
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['delete'])) {
     try {
+        
+        // カルテIDを8桁ゼロパディング
+        $karte_id_raw = $_POST['karte_id'] ?? null;
+        $karte_id_to_save = null;
+        // 値が入力されている（nullでも空文字列でもない）場合のみパディング
+        if (!is_null($karte_id_raw) && $karte_id_raw !== '') {
+            $karte_id_to_save = str_pad($karte_id_raw, 8, '0', STR_PAD_LEFT);
+        }
+
         $sql = "UPDATE questionnaire_responses SET
             staff_id = :staff_id, karte_id = :karte_id, staff_name = :staff_name, department = :department,
             q1_blood_pressure_med = :q1, q1_medicine_name = :q1_medicine_name,
@@ -65,7 +86,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['delete'])) {
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
             ':staff_id' => $_POST['staff_id'] ?? null,
-            ':karte_id' => $_POST['karte_id'] ?? null,
+            ':karte_id' => $karte_id_to_save, // ★ 変更点
             ':staff_name' => $_POST['staff_name'] ?? null,
             ':department' => $_POST['department'] ?? null,
             ':q1' => $_POST['q1'] ?? null,
@@ -96,6 +117,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['delete'])) {
             ':response_id' => $response_id
         ]);
         
+        // 更新成功メッセージをセッションに保存してリダイレクト
+        $_SESSION['flash_message'] = "回答ID: $response_id のデータは正常に更新されました。";
         header('Location: admin_dashboard.php');
         exit;
 
@@ -124,8 +147,10 @@ try {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>問診票データ編集</title>
     <link rel="stylesheet" href="admin_index_style.css">
-    </head>
-<body class="dashboard-page"> <div class="container">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body class="dashboard-page">
+    <div class="container">
         <header class="header">
             <h1>問診票データ編集 (回答ID: <?php echo htmlspecialchars($response['response_id']); ?>)</h1>
             <p class="subtitle">標準的な質問票</p>
@@ -141,14 +166,14 @@ try {
 
         <form method="POST" action="" class="questionnaire-form" id="questionnaireForm">
             <div class="section">
-                <h2>職員情報</h2>
+                <h2><i class="fas fa-user-circle"></i> 職員情報</h2>
                 <div class="form-group">
                     <label for="staff_id">職員ID</label>
                     <input type="text" id="staff_id" name="staff_id" value="<?php echo htmlspecialchars($response['staff_id']); ?>">
                 </div>
                 <div class="form-group">
                     <label for="karte_id">カルテID</label>
-                    <input type="text" id="karte_id" name="karte_id" value="<?php echo htmlspecialchars($response['karte_id'] ?? ''); ?>">
+                    <input type="text" id="karte_id" name="karte_id" value="<?php echo htmlspecialchars($response['karte_id'] ?? ''); ?>" placeholder="例: 100 (保存時に00100になります)">
                 </div>
                 <div class="form-group">
                     <label for="staff_name">氏名</label>
@@ -161,7 +186,7 @@ try {
             </div>
 
             <div class="section">
-                <h2>服薬状況</h2>
+                <h2><i class="fas fa-pills"></i> 服薬状況</h2>
                 <div class="question">
                     <label>1. a. 血圧を下げる薬</label>
                     <div class="radio-group">
@@ -198,7 +223,7 @@ try {
             </div>
 
             <div class="section">
-                <h2>既往歴</h2>
+                <h2><i class="fas fa-heartbeat"></i> 既往歴</h2>
                 <div class="question">
                     <label>4. 脳卒中（脳出血、脳梗塞等）</label>
                     <div class="radio-group">
@@ -230,7 +255,7 @@ try {
             </div>
 
             <div class="section">
-                <h2>生活習慣</h2>
+                <h2><i class="fas fa-walking"></i> 生活習慣</h2>
                 <div class="question">
                     <label>8. 喫煙</label>
                     <div class="radio-group">
@@ -276,7 +301,7 @@ try {
             </div>
 
             <div class="section">
-                <h2>食生活</h2>
+                <h2><i class="fas fa-utensils"></i> 食生活</h2>
                 <div class="question">
                     <label>14. 食べる速度</label>
                     <div class="radio-group">
@@ -309,7 +334,7 @@ try {
             </div>
             
             <div class="section">
-                <h2>その他</h2>
+                <h2><i class="fas fa-ellipsis-h"></i> その他</h2>
                 <div class="question">
                     <label>18. 飲酒頻度</label>
                     <div class="radio-group">
@@ -358,7 +383,9 @@ try {
                 <button type="button" id="showDeleteModalBtn" class="btn btn-danger"><i class="fas fa-trash-alt"></i> 削除</button>
                 <a href="admin_dashboard.php" class="btn btn-secondary" style="text-decoration: none;"><i class="fas fa-list"></i> 一覧に戻る</a>
             </div>
-            </form>
+            
+            <input type="hidden" name="response_id" value="<?php echo htmlspecialchars($response['response_id']); ?>">
+        </form>
 
     </div>
 
@@ -381,13 +408,17 @@ try {
             </div>
         </div>
     </div>
+    
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // フォーム送信前の確認
             document.getElementById('questionnaireForm').addEventListener('submit', function(e) {
+                // 押されたボタンが 'delete' ボタンでないことを確認
                 var isDeleteSubmit = document.activeElement && document.activeElement.name === 'delete';
+                
+                // 'delete' ボタン（モーダル内の削除実行）のサブミットでは確認ダイアログを出さない
                 if (!isDeleteSubmit && !confirm('この内容で更新してもよろしいですか？')) {
-                    e.preventDefault();
+                    e.preventDefault(); // 更新をキャンセル
                 }
             });
 
@@ -398,6 +429,8 @@ try {
                 const radios = document.querySelectorAll(`input[name="${radioName}"]`);
                 const targetGroup = document.getElementById(targetGroupId);
                 
+                if (!targetGroup) return; // 対象グループがない場合は何もしない
+
                 function toggleVisibility() {
                     const checkedRadio = document.querySelector(`input[name="${radioName}"]:checked`);
                     if (checkedRadio && checkedRadio.value === '1') {
@@ -421,9 +454,11 @@ try {
                 const showDeleteBtn = document.getElementById('showDeleteModalBtn');
                 const closeDeleteBtns = deleteModal.querySelectorAll('.modal-close-btn, .modal-cancel-btn');
 
-                showDeleteBtn.addEventListener('click', function() {
-                    deleteModal.style.display = 'flex';
-                });
+                if (showDeleteBtn) {
+                    showDeleteBtn.addEventListener('click', function() {
+                        deleteModal.style.display = 'flex';
+                    });
+                }
 
                 closeDeleteBtns.forEach(btn => {
                     btn.addEventListener('click', function() {
@@ -431,6 +466,7 @@ try {
                     });
                 });
 
+                // モーダルの外側をクリックしたら閉じる
                 deleteModal.addEventListener('click', function(e) {
                     if (e.target === deleteModal) {
                         deleteModal.style.display = 'none';
