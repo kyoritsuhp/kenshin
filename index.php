@@ -34,9 +34,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // ★ 修正: 全角の英数字が入力された場合、半角に変換する
     $staff_id = mb_convert_kana($staff_id, "a"); // (例: "１００" -> "100")
 
-    $staff_name = trim($_POST['staff_name'] ?? '');
+    // ▼▼▼ 【①氏名】全角・半角スペースを除去 ▼▼▼
+    $staff_name_raw = trim($_POST['staff_name'] ?? '');
+    // 全角スペース(　)と半角スペース( )を両方除去
+    $staff_name = preg_replace('/[\s　]/u', '', $staff_name_raw);
+    // ▲▲▲
+    
     $department = trim($_POST['department'] ?? '');
     $facility_name = trim($_POST['facility_name'] ?? ''); 
+
+    // ▼▼▼ 【③施設名連動】協立病院でない場合、所属部署をクリア ▼▼▼
+    if ($facility_name !== '協立病院') {
+        $department = ''; // 非表示の場合は値を空にする
+    }
+    // ▲▲▲
 
     // デフォルト設定が有効な場合は、POSTされた値ではなく設定値を使用
     if ($isFixed) {
@@ -52,6 +63,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $jinji_pdo = null; 
 
     // ★ 修正: 5桁パディング済みのIDを保存する変数を定義
+    // staff_idが空（''）の場合は '' のまま。
+    // staff_idが入力されている（'100'）場合は '00100' になる。
     $staff_id_padded = !empty($staff_id) ? str_pad($staff_id, 5, "0", STR_PAD_LEFT) : $staff_id;
 
     if (!empty($staff_id)) {
@@ -116,8 +129,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             $stmt->execute([
                 ':staff_id' => $staff_id_padded, // ★ 修正: $staff_id_padded (パディング済みID) を登録
-                ':staff_name' => $staff_name,
-                ':department' => $department,
+                ':staff_name' => $staff_name, // ★ 修正: 【①氏名】スペース除去済みの $staff_name を登録
+                ':department' => $department, // ★ 修正: 【②所属部署】
                 ':facility_name' => $facility_name,
                 ':health_check_year' => $health_check_year,
                 ':health_check_season' => $health_check_season,
@@ -165,9 +178,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
   
     <link rel="stylesheet" href="index_style.css">
 
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-
-</head>
+    <style>
+        /* select (プルダウン) のフォントを他のフォーム要素と合わせる */
+        .form-group select {
+            font-family: inherit; /* 親要素のフォント（ページ全体）を継承 */
+            font-size: inherit;   /* 親要素のフォントサイズを継承 */
+        }
+    </style>
+    </head>
 <body>
     <div class="container">
         <header class="header">
@@ -206,7 +224,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             <div class="form-page active" data-page="1">
                 <div class="section">
-                    <h2><i class="fas fa-file-medical"></i> 健康診断情報</h2>
+                    <h2><span class="section-icon icon-info"></span> 健康診断情報</h2>
                     <?php if ($isFixed): ?>
                         <div class="form-group">
                             <label>年度・時期</label>
@@ -247,7 +265,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <?php endif; ?>
                 </div>
                 <div class="section">
-                    <h2><i class="fas fa-user-circle"></i> 職員情報</h2>
+                    <h2><span class="section-icon icon-user"></span> 職員情報</h2>
                     <div class="form-group">
                         <label>施設名 </label>
                         <div class="radio-group">
@@ -263,18 +281,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                     <div class="form-group">
                         <label for="staff_name">氏名</label>
-                        <input type="text" id="staff_name" name="staff_name" value="<?php echo htmlspecialchars($staff_name ?? ''); ?>">
+                        <input type="text" id="staff_name" name="staff_name" value="<?php echo htmlspecialchars($staff_name_raw ?? ''); ?>" required>
                     </div>
-                    <div class="form-group">
-                        <label for="department">所属部署</label>
-                        <input type="text" id="department" name="department" value="<?php echo htmlspecialchars($department ?? ''); ?>">
+                    
+                    <div class="form-group" id="department_group">
+                        <label for="department">所属部署 </label>
+                        <select id="department" name="department">
+                            <option value="" <?php echo empty($department) ? 'selected' : ''; ?>>--選択して下さい--</option>
+                            <option value="不明・該当なし" <?php echo ($department ?? '') === '不明・該当なし' ? 'selected' : ''; ?>>不明・該当なし</option>
+                            <option value="2階回復期" <?php echo ($department ?? '') === '2階回復期' ? 'selected' : ''; ?>>2階回復期</option>
+                            <option value="3階一般" <?php echo ($department ?? '') === '3階一般' ? 'selected' : ''; ?>>3階一般</option>
+                            <option value="4階西病棟" <?php echo ($department ?? '') === '4階西病棟' ? 'selected' : ''; ?>>4階西病棟</option>
+                            <option value="4階東病棟" <?php echo ($department ?? '') === '4階東病棟' ? 'selected' : ''; ?>>4階東病棟</option>
+                            <option value="2階介護医療院" <?php echo ($department ?? '') === '2階介護医療院' ? 'selected' : ''; ?>>2階介護医療院</option>
+                            <option value="3階介護医療院" <?php echo ($department ?? '') === '3階介護医療院' ? 'selected' : ''; ?>>3階介護医療院</option>
+                            <option value="事務" <?php echo ($department ?? '') === '事務' ? 'selected' : ''; ?>>事務</option>
+                        </select>
                     </div>
-                </div>
+                    </div>
             </div>
 
             <div class="form-page" data-page="2">
                 <div class="section">
-                    <h2><i class="fas fa-pills"></i> 服薬状況</h2>
+                    <h2><span class="section-icon icon-step01"></span> 服薬状況</h2>
                     <div class="question">
                         <label>1. a. 血圧を下げる薬 </label>
                         <div class="radio-group">
@@ -313,7 +342,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <div class="form-page" data-page="3">
                  <div class="section">
-                    <h2><i class="fas fa-heartbeat"></i> 既往歴</h2>
+                    <h2><span class="section-icon icon-history"></span> 既往歴</h2>
                     <div class="question">
                         <label>4. 医師から、脳卒中（脳出血、脳梗塞等）にかかっているといわれたり、治療を受けたことがありますか。 </label>
                         <div class="radio-group">
@@ -347,7 +376,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <div class="form-page" data-page="4">
                 <div class="section">
-                    <h2><i class="fas fa-walking"></i> 生活習慣</h2>
+                    <h2><span class="section-icon icon-lifestyle"></span> 生活習慣</h2>
                     <div class="question">
                         <label>8. 現在、たばこを習慣的に吸っている。<br><span class="note">（※「現在、習慣的に喫煙している者」とは、「合計100本以上、又は6ヶ月以上吸っている者」であり、最近1ヶ月間も吸っている者）</span> </label>
                         <div class="radio-group">
@@ -395,7 +424,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <div class="form-page" data-page="5">
                 <div class="section">
-                    <h2><i class="fas fa-utensils"></i> 食生活</h2>
+                    <h2><span class="section-icon icon-diet"></span> 食生活</h2>
                     <div class="question">
                         <label>14. 人と比較して食べる速度が速い。 </label>
                         <div class="radio-group">
@@ -430,7 +459,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <div class="form-page" data-page="6">
                 <div class="section">
-                    <h2><i class="fas fa-wine-glass-alt"></i> 飲酒</h2>
+                    <h2><span class="section-icon icon-alcohol"></span> 飲酒</h2>
                     <div class="question">
                         <label>18. お酒（清酒、焼酎、ビール、洋酒など）を飲む頻度 </label>
                         <div class="radio-group">
@@ -450,7 +479,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </div>
                 </div>
                 <div class="section">
-                    <h2><i class="fas fa-bed"></i> 睡眠</h2>
+                    <h2><span class="section-icon icon-sleep"></span> 睡眠</h2>
                     <div class="question">
                         <label>20. 睡眠で休養が十分とれている。 </label>
                         <div class="radio-group">
@@ -463,7 +492,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <div class="form-page" data-page="7">
                 <div class="section">
-                    <h2><i class="fas fa-tasks"></i> 生活習慣改善について</h2>
+                    <h2><span class="section-icon icon-intention"></span> 生活習慣改善について</h2>
                     <div class="question">
                         <label>21. 運動や食生活等の生活習慣を改善してみようと思いますか。 </label>
                         <div class="radio-group vertical">
@@ -486,7 +515,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             <div class="form-page" data-page="8">
                 <div class="section">
-                    <h2><i class="fas fa-check-circle"></i> 入力内容の確認</h2>
+                    <h2><span class="section-icon icon-confirm"></span> 入力内容の確認</h2>
                     <p>以下の内容で送信します。よろしければ「送信」ボタンを押してください。</p>
                     <div id="confirmationReview">
                         </div>
@@ -534,6 +563,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             toggleVisibility(); // 初期表示
         }
 
+        /**
+         * ▼▼▼ 【③施設名連動】所属部署の表示/非表示を切り替える関数 ▼▼▼
+         */
+        function toggleDepartmentVisibility() {
+            const departmentGroup = document.getElementById('department_group');
+            const departmentSelect = document.getElementById('department');
+            if (!departmentGroup || !departmentSelect) return;
+
+            const selectedFacility = document.querySelector('input[name="facility_name"]:checked');
+            
+            if (selectedFacility && selectedFacility.value === '協立病院') {
+                // "協立病院" が選択されている場合
+                departmentGroup.style.display = 'block'; // 表示
+                // ▼▼▼ 【④任意】 'required' の操作を削除 (必須ではなくなったため) ▼▼▼
+                // departmentSelect.required = true; 
+            } else {
+                // "協立病院" 以外が選択されている (または未選択) の場合
+                departmentGroup.style.display = 'none'; // 非表示
+                // ▼▼▼ 【④任意】 'required' の操作を削除 (必須ではなくなったため) ▼▼▼
+                // departmentSelect.required = false; 
+                departmentSelect.value = ''; // 選択をクリア
+                
+                // 非表示にする際、もし赤文字（is-invalid）になっていたら解除する
+                const parentContainer = departmentSelect.closest('.form-group');
+                if (parentContainer) {
+                    parentContainer.classList.remove('is-invalid');
+                }
+            }
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             // 送信完了メッセージがある場合は、フォーム操作JSを実行しない
             if (document.querySelector('.message.success')) {
@@ -555,43 +614,71 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             setupDynamicForm('q1', 'q1_medicine_name_group');
             setupDynamicForm('q2', 'q2_medicine_name_group');
             setupDynamicForm('q3', 'q3_medicine_name_group');
+            
+            // ▼▼▼ 【③施設名連動】初期表示を実行 ▼▼▼
+            toggleDepartmentVisibility(); 
 
+            // ▼▼▼ 修正: ページ表示時に必須項目のラベル色を（赤に）設定する関数 ▼▼▼
             /**
              * ページ内の必須ラジオ項目をチェックし、未選択なら.is-invalidを付与
              * @param {HTMLElement} pageElement - 対象のページ要素
              */
             function setInitialValidationState(pageElement) {
+                // --- ラジオの必須チェック ---
                 const radioGroupNames = new Set();
-                // 1. ページ内の必須ラジオのnameをすべて集める
                 pageElement.querySelectorAll('input[type="radio"][required]').forEach(radio => {
                     radioGroupNames.add(radio.name);
                 });
 
                 radioGroupNames.forEach(name => {
-                    // 2. グループ内の最初のラジオ（ disabled チェック用）
                     const firstRadio = pageElement.querySelector(`input[name="${name}"]`);
-                    // 3. disabled（固定値）の場合はチェック対象外
                     if (firstRadio && firstRadio.disabled) {
                         return;
                     }
-
-                    // 4. グループ内でチェック済みの項目があるか確認
                     const anyChecked = pageElement.querySelector(`input[name="${name}"]:checked`);
-                    
-                    // 5. 親コンテナ（.question または .form-group）を探す
                     const parentContainer = firstRadio.closest('.question') || firstRadio.closest('.form-group');
                     if (!parentContainer) return;
 
                     if (!anyChecked) {
-                        // 6. 未選択の場合： ラベルを赤にする
                         parentContainer.classList.add('is-invalid');
                     } else {
-                        // 7. 選択済みの場合（例：ブラウザが値を保持）： ラベルを赤にしない
                         parentContainer.classList.remove('is-invalid');
                     }
                 });
-            }
 
+                // --- Select（プルダウン）の必須チェック ---
+                pageElement.querySelectorAll('select[required]').forEach(select => {
+                    // ▼▼▼ 【④任意】 'required' がない 'department' はここでチェックされなくなる (赤枠の修正) ▼▼▼
+                    if (select.disabled || !select.required) return;
+                    
+                    const parentContainer = select.closest('.form-group');
+                    if (!parentContainer) return;
+
+                    if (select.value === "") { // 未選択（valueが空）
+                        parentContainer.classList.add('is-invalid');
+                    } else {
+                        parentContainer.classList.remove('is-invalid');
+                    }
+                });
+                
+                // --- ▼▼▼ 【⑦必須】 テキスト入力の必須チェックを追加 ▼▼▼ ---
+                pageElement.querySelectorAll('input[required], textarea[required]').forEach(input => {
+                    if (input.type === 'radio' || input.disabled) return; // ラジオとdisabledは除外
+                    
+                    const parentContainer = input.closest('.form-group');
+                    if (!parentContainer) return;
+
+                    if (input.value.trim() === "") { // 値が空
+                        parentContainer.classList.add('is-invalid');
+                    } else {
+                        parentContainer.classList.remove('is-invalid');
+                    }
+                });
+                // --- ▲▲▲ ---
+            }
+            // ▲▲▲
+
+            // ▼▼▼ 修正: ラジオボタンの選択（change）イベント ▼▼▼
             /**
              * ラジオボタン選択時のスタイル（背景色）を更新
              */
@@ -616,6 +703,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if (parentContainer) {
                         parentContainer.classList.remove('is-invalid');
                     }
+                    
+                    // ▼▼▼ 【③施設名連動】施設名が変更されたら所属部署の表示を切り替え ▼▼▼
+                    if (this.name === 'facility_name') {
+                        toggleDepartmentVisibility();
+                    }
                 });
                 
                 // ページロード時に、ブラウザが保持している選択状態を反映
@@ -623,10 +715,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     updateRadioStyles(radio.name);
                 }
             });
+            // ▲▲▲
+
+            // ▼▼▼ 【②所属部署】Select（プルダウン）の change イベント ▼▼▼
+            const allSelects = document.querySelectorAll('select');
+            allSelects.forEach(select => {
+                select.addEventListener('change', function() {
+                    // 選択したら親コンテナの.is-invalid（赤文字）を解除
+                    const parentContainer = this.closest('.form-group');
+                    if (parentContainer) {
+                        // ▼▼▼ 【④任意】 'required' がないため、is-invalid は解除するだけでよい ▼▼▼
+                        parentContainer.classList.remove('is-invalid');
+                    }
+                });
+            });
+            // ▲▲▲
+
+            // ▼▼▼ 【⑦必須】 必須テキスト入力の input イベントを追加 ▼▼▼
+            const allRequiredInputs = document.querySelectorAll('input[required], textarea[required]');
+            allRequiredInputs.forEach(input => {
+                if (input.type === 'radio' || input.type === 'checkbox') return; // テキスト系のみ
+
+                input.addEventListener('input', function() { 
+                    const parentContainer = this.closest('.form-group');
+                    if (parentContainer) {
+                        // checkValidity() で現在の入力値が有効か（空でないか）をチェック
+                        if (this.checkValidity()) {
+                            parentContainer.classList.remove('is-invalid');
+                        } else {
+                            parentContainer.classList.add('is-invalid');
+                        }
+                    }
+                });
+            });
+            // ▲▲▲
 
 
             /**
              * ナビゲーションボタンとプログレスバーの状態を更新する
+             * ▼▼▼ 修正: setInitialValidationState を呼び出すよう変更 ▼▼▼
              */
             function updateNavigation() {
                 // ページ表示
@@ -634,13 +761,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     const isActive = (index + 1) === currentPage;
                     page.classList.toggle('active', isActive);
                     
-                    // ページが表示された瞬間に、そのページの赤文字（未選択）状態をセットする
+                    // ▼▼▼ ページが表示された瞬間に、そのページの赤文字（未選択）状態をセットする ▼▼▼
                     if (isActive) {
                         setInitialValidationState(page);
                     }
                 });
 
-                // ボタン表示
+                // ボタン表示 (CSS側も visibility を使うように変更したため、.visibleクラスの付け外しはそのまま)
                 backBtn.classList.toggle('visible', currentPage > 1);
                 nextBtn.classList.toggle('visible', currentPage < totalPages);
                 submitBtn.classList.toggle('visible', currentPage === totalPages);
@@ -667,6 +794,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             /**
              * 現在のページのバリデーションを実行する
+             * （「次へ」ボタンクリック時に使用）
              */
             function validateCurrentPage() {
                 const activePage = document.querySelector(`.form-page[data-page="${currentPage}"]`);
@@ -709,14 +837,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 });
                 // --- ラジオボタンのチェックここまで ---
 
+                // --- ▼▼▼ 【②所属部署】Select（プルダウン）のチェックを追加 ▼▼▼ ---
+                const selects = activePage.querySelectorAll('select[required]');
+                selects.forEach(select => {
+                    // ▼▼▼ 【④任意】 'department' は 'required' でないため、このチェックから除外される ▼▼▼
+                    if (select.disabled || !select.required) return;
+
+                    if (!select.checkValidity()) { // checkValidity()は value="" の場合に false を返す
+                        try {
+                            select.reportValidity();
+                        } catch(e) {
+                            console.warn(`Validation failed for: ${select.name}`);
+                        }
+                        if (!firstInvalid) firstInvalid = select;
+
+                        // 親コンテナに .is-invalid を追加（ラベルを赤にする）
+                        const parentContainer = select.closest('.form-group');
+                        if (parentContainer) {
+                            parentContainer.classList.add('is-invalid');
+                        }
+                    }
+                });
+                // --- Selectのチェックここまで ---
+
                 // --- その他の必須入力（テキストボックスなど）のチェック ---
-                const inputs = activePage.querySelectorAll('input[required], select[required], textarea[required]');
+                const inputs = activePage.querySelectorAll('input[required], textarea[required]');
                 inputs.forEach(input => {
                     if (input.type === 'radio' || input.disabled) return; // ラジオとdisabledは除外
 
                     if (!input.checkValidity()) {
                         input.reportValidity();
                         if (!firstInvalid) firstInvalid = input;
+
+                        // ▼▼▼ 【⑦必須】 テキスト入力でも .is-invalid を追加 ▼▼▼
+                        const parentContainer = input.closest('.form-group');
+                        if (parentContainer) {
+                            parentContainer.classList.add('is-invalid');
+                        }
+                        // --- ▲▲▲ ---
                     }
                 });
                 // --- その他の必須入力ここまで ---
@@ -735,6 +893,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 health_check_year: { '2025': '2025年', '2026': '2026年', '2027': '2027年', '2028': '2028年', '2029': '2029年', '2030': '2030年' },
                 health_check_season: { '春': '春', '冬': '冬' },
                 facility_name: { '協立病院': '協立病院', '清寿園': '清寿園', 'かがやき': 'かがやき', 'かがやき2号館': 'かがやき2号館' },
+                // ▼▼▼ 【②所属部署】確認画面用のマッピングを追加 ▼▼▼
+                department: {
+                    '': '--選択して下さい--', // ▼▼▼ 【⑥修正】 デフォルトテキスト変更 ▼▼▼
+                    '不明・該当なし': '不明・該当なし', // ▼▼▼ 【⑥修正】 選択肢追加 ▼▼▼
+                    '2階回復期': '2階回復期',
+                    '3階一般': '3階一般',
+                    '4階西病棟': '4階西病棟',
+                    '4階東病棟': '4階東病棟',
+                    '2階介護医療院': '2階介護医療院',
+                    '3階介護医療院': '3階介護医療院',
+                    '事務': '事務'
+                },
                 q1: { '1': 'はい', '2': 'いいえ' },
                 q2: { '1': 'はい', '2': 'いいえ' },
                 q3: { '1': 'はい', '2': 'いいえ' },
@@ -742,7 +912,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 q5: { '1': 'はい', '2': 'いいえ' },
                 q6: { '1': 'はい', '2': 'いいえ' },
                 q7: { '1': 'はい', '2': 'いいえ' },
-                q8: { '1': 'はい', '2': 'いいえ' },
+                q8: { '1': 'はい', '2': 'いいえ' }, 
                 q9: { '1': 'はい', '2': 'いいえ' },
                 q10: { '1': 'はい', '2': 'いいえ' },
                 q11: { '1': 'はい', '2': 'いいえ' },
@@ -755,7 +925,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 q18: { '1': '毎日', '2': '時々', '3': 'ほとんど飲まない（飲めない）' },
                 q19: { '1': '1合未満', '2': '1~2合未満', '3': '2~3合未満', '4': '3合以上' },
                 q20: { '1': 'はい', '2': 'いいえ' },
-                q21: { '1': '① 改善するつもりはない', '2': '② 改善するつもりである（概ね6か月以内）', '3': '③ 近いうちに（概ね1か月以内）改善するつもりであり、少しずつ始めている', '4.': '④ 既に改善に取り組んでいる（6か月未満）', '5': '⑤ 既に改善に取り組んでいる（6か月以上）' },
+                q21: { '1': '① 改善するつもりはない', '2': '② 改善するつもりである（概ね6か月以内）', '3': '③ 近いうちに（概ね1か月以内）改善するつもりであり、少しずつ始めている', '4': '④ 既に改善に取り組んでいる（6か月未満）', '5': '⑤ 既に改善に取り組んでいる（6か月以上）' },
                 q22: { '1': 'はい', '2': 'いいえ' }
             };
 
@@ -775,10 +945,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 return map[checkedRadio.value] || checkedRadio.value;
             }
 
+            // ▼▼▼ 【②所属部署】Select（プルダウン）の選択値を取得してテキストに変換する関数 ▼▼▼
+            function getSelectValueText(name) {
+                const select = form.querySelector(`select[name="${name}"]`);
+                if (!select) return '（要素なし）';
+                
+                // ▼▼▼ 【③施設名連動】非表示（＝協立病院以外）の場合は「対象外」 ▼▼▼
+                const departmentGroup = document.getElementById('department_group'); // JSグローバルスコープから参照
+                if (departmentGroup && departmentGroup.style.display === 'none') {
+                    return '（対象外）'; 
+                }
+                
+                // ▼▼▼ 【④任意】 'required' ではないため、 value="" でも赤文字にしない ▼▼▼
+                if (select.value === "") {
+                    // return '<span style="color: red;">未選択</span>'; // 削除
+                    return '--選択して下さい--'; // ▼▼▼ 【⑥修正】 表示テキスト変更 ▼▼▼
+                }
+                
+                const map = valueMappings[name] || {};
+                // ▼▼▼ 【④任意】 value="" の時のマッピングを修正 ▼▼▼
+                const value = select.value;
+                if (value === "") {
+                     return '--選択して下さい--'; // ▼▼▼ 【⑥修正】 表示テキスト変更 ▼▼▼
+                }
+                return map[value] || value;
+            }
+
             // テキスト入力の値を取得する関数
             function getInputValue(id) {
                 const element = document.getElementById(id);
                 const value = element ? element.value.trim() : '';
+
+                // ▼▼▼ 【⑦必須】 氏名が必須になったため、未入力時の表示を修正 ▼▼▼
+                if (element && element.required && value === '') {
+                     return '<span style="color: red;">未入力</span>';
+                }
+
+                // ▼▼▼ 職員IDが任意の入力になったため、未入力の表示を変更 ▼▼▼
                 if (id === 'staff_id' && value === '') {
                     return '未入力';
                 }
@@ -801,9 +1004,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 detailsHtml += `<li><strong>年度:</strong> ${getRadioValueText('health_check_year')}</li>`;
                 detailsHtml += `<li><strong>時期:</strong> ${getRadioValueText('health_check_season')}</li>`;
                 detailsHtml += `<li><strong>職員ID:</strong> ${getInputValue('staff_id')}</li>`;
-                detailsHtml += `<li><strong>氏名:</strong> ${getInputValue('staff_name')}</li>`;
-                detailsHtml += `<li><strong>所属部署:</strong> ${getInputValue('department')}</li>`;
+                detailsHtml += `<li><strong>氏名:</strong> ${getInputValue('staff_name')}</li>`; // 【⑦必須】 getInputValueが未入力をハンドル
                 detailsHtml += `<li><strong>施設名:</strong> ${getRadioValueText('facility_name')}</li>`; 
+                // ▼▼▼ 【②所属部署】取得方法を getSelectValueText に変更 ▼▼▼
+                // ▼▼▼ 【③施設名連動】表示/非表示を考慮（getSelectValueText側で対応済み）▼▼▼
+                detailsHtml += `<li><strong>所属部署:</strong> ${getSelectValueText('department')}</li>`;
 
                 // ページ2
                 let q1_text = getRadioValueText('q1');
@@ -892,9 +1097,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         }
                     });
 
-                    form.querySelectorAll('input[required], select[required], textarea[required]').forEach(input => {
-                        // 職員ID (staff_id) は必須チェックの対象外
+                    // ▼▼▼ 【②所属部署】Select（プルダウン）の最終チェックを追加 ▼▼▼
+                    form.querySelectorAll('select[required]').forEach(select => {
+                        // ▼▼▼ 【④任意】 'department' は 'required' でないため、このチェックから除外される ▼▼▼
+                        if (select.disabled || !select.required) return;
+                        if (!select.checkValidity()) {
+                            allValid = false;
+                        }
+                    });
+
+                    // ▼▼▼ 【⑦必須】 必須テキスト入力のチェックを追加 ▼▼▼
+                    form.querySelectorAll('input[required], textarea[required]').forEach(input => {
+                        // ▼▼▼ 職員ID (staff_id) はチェック対象外にする ▼▼▼
                         if (input.type === 'radio' || input.disabled || input.id === 'staff_id') return;
+                        
+                        // ▼▼▼ 【⑦必須】 staff_id以外の必須テキストをチェック ▼▼▼
+                        if (input.id === 'staff_id') return; // staff_idは必須ではない
+                        
                         if (!input.checkValidity()) {
                             allValid = false;
                         }
@@ -912,7 +1131,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             });
 
-            // 初期表示時に updateNavigation() を呼び出す
+            // ▼▼▼ 修正: 初期表示時に updateNavigation() を呼び出す ▼▼▼
+            // これにより、最初のページの赤文字状態がセットされます
             updateNavigation();
         });
     </script>

@@ -510,3 +510,69 @@ input:invalid:focus, select:invalid:focus, textarea:invalid:focus {
     -webkit-mask-repeat: no-repeat;
     -webkit-mask-position: center;
 }
+
+/* ===============================================
+   ローカルSVGアイコン用 (mask-image版)
+   =============================================== */
+
+/* アイコンの共通スタイル */
+.section h2 .section-icon {
+    display: inline-block;
+    width: 1.1em; /* h2のフォントサイズに連動 */
+    height: 1.1em;
+    margin-right: 4px; /* アイコンとテキストの間隔 */
+    vertical-align: -0.15em; /* テキストとの高さを微調整 */
+    
+    /* ★重要: h2の文字色(color)を、この要素の背景色として使用 */
+    background-color: currentColor; 
+    
+    /* マスクの共通設定 */
+    mask-size: contain;
+    mask-repeat: no-repeat;
+    mask-position: center;
+    -webkit-mask-size: contain;
+    -webkit-mask-repeat: no-repeat;
+    -webkit-mask-position: center;
+}
+
+/* ★重要: 各アイコンの「形」をマスクとして指定 */
+.icon-info {
+    -webkit-mask-image: url(../img/kenshin_section_info.svg);
+    mask-image: url(../img/kenshin_section_info.svg);
+}
+.icon-user {
+    -webkit-mask-image: url(../img/kenshin_section_user.svg);
+    mask-image: url(../img/kenshin_section_user.svg);
+}
+.icon-step01 {
+    -webkit-mask-image: url(../img/kenshin_step01.svg);
+    mask-image: url(../img/kenshin_step01.svg);
+}
+.icon-history {
+    -webkit-mask-image: url(../img/kenshin_section_history.svg);
+    mask-image: url(../img/kenshin_section_history.svg);
+}
+.icon-lifestyle {
+    -webkit-mask-image: url(../img/kenshin_section_lifestyle.svg);
+    mask-image: url(../img/kenshin_section_lifestyle.svg);
+}
+.icon-diet {
+    -webkit-mask-image: url(../img/kenshin_section_diet.svg);
+    mask-image: url(../img/kenshin_section_diet.svg);
+}
+.icon-alcohol {
+    -webkit-mask-image: url(../img/kenshin_section_alcohol.svg);
+    mask-image: url(../img/kenshin_section_alcohol.svg);
+}
+.icon-sleep {
+    -webkit-mask-image: url(../img/kenshin_section_sleep.svg);
+    mask-image: url(../img/kenshin_section_sleep.svg);
+}
+.icon-intention {
+    -webkit-mask-image: url(../img/kenshin_section_intention.svg);
+    mask-image: url(../img/kenshin_section_intention.svg);
+}
+.icon-confirm {
+    -webkit-mask-image: url(../img/kenshin_section_confirm.svg);
+    mask-image: url(../img/kenshin_section_confirm.svg);
+}

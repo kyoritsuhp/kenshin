@@ -166,7 +166,7 @@ try {
 
         <form method="POST" action="" class="questionnaire-form" id="questionnaireForm">
             <div class="section">
-                <h2><i class="fas fa-user-circle"></i> 職員情報</h2>
+                <h2><span class="section-icon icon-user"></span> 職員情報</h2>
                 <div class="form-group">
                     <label for="staff_id">職員ID</label>
                     <input type="text" id="staff_id" name="staff_id" value="<?php echo htmlspecialchars($response['staff_id']); ?>">
@@ -186,7 +186,7 @@ try {
             </div>
 
             <div class="section">
-                <h2><i class="fas fa-pills"></i> 服薬状況</h2>
+                <h2><span class="section-icon icon-step01"></span> 服薬状況</h2>
                 <div class="question">
                     <label>1. a. 血圧を下げる薬</label>
                     <div class="radio-group">
@@ -223,7 +223,7 @@ try {
             </div>
 
             <div class="section">
-                <h2><i class="fas fa-heartbeat"></i> 既往歴</h2>
+                <h2><span class="section-icon icon-history"></span> 既往歴</h2>
                 <div class="question">
                     <label>4. 脳卒中（脳出血、脳梗塞等）</label>
                     <div class="radio-group">
@@ -255,7 +255,7 @@ try {
             </div>
 
             <div class="section">
-                <h2><i class="fas fa-walking"></i> 生活習慣</h2>
+                <h2><span class="section-icon icon-lifestyle"></span> 生活習慣</h2>
                 <div class="question">
                     <label>8. 喫煙</label>
                     <div class="radio-group">
@@ -301,7 +301,7 @@ try {
             </div>
 
             <div class="section">
-                <h2><i class="fas fa-utensils"></i> 食生活</h2>
+                <h2><span class="section-icon icon-diet"></span> 食生活</h2>
                 <div class="question">
                     <label>14. 食べる速度</label>
                     <div class="radio-group">
@@ -334,7 +334,7 @@ try {
             </div>
             
             <div class="section">
-                <h2><i class="fas fa-ellipsis-h"></i> その他</h2>
+                <h2><span class="section-icon icon-intention"></span> その他</h2>
                 <div class="question">
                     <label>18. 飲酒頻度</label>
                     <div class="radio-group">
