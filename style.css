@@ -18,7 +18,7 @@ body {
     line-height: 1.4;
     background: #FFFFFF; /* グラデーションから白に変更 */
     min-height: 100vh;
-    padding: 50px 10px; /* 10pxから変更 (上下の余白を確保) */
+    padding: 20px 10px; /* 50px 10px から変更 */
     overflow-x: hidden; /* スケールによる横スクロールを防止 */
 }
 
@@ -31,8 +31,8 @@ body {
     overflow: hidden;
     
     /* --- 125%に拡大 --- */
-    transform: scale(1.25);
-    transform-origin: top center;
+    /* transform: scale(1.25); を削除 */
+    /* transform-origin: top center; を削除 */
     /* --- ここまで --- */
 }
 
@@ -402,7 +402,7 @@ body {
     /* ▼ 背景はここでグラデーションを再指定（bodyが白になったため）*/
     background: #FFFFFF;
     /* ▼ 100vhからpaddingを引く */
-    min-height: calc(100vh - 100px);
+    min-height: calc(100vh - 40px); /* 100px から変更 */
 }
 
 .login-box {
@@ -415,8 +415,8 @@ body {
     text-align: center;
 
     /* --- 125%に拡大 (追加) --- */
-    transform: scale(1.25);
-    transform-origin: center center;
+    /* transform: scale(1.25); を削除 */
+    /* transform-origin: center center; を削除 */
     /* --- ここまで --- */
 }
 

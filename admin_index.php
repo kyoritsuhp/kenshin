@@ -147,7 +147,6 @@ try {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>問診票データ編集</title>
     <link rel="stylesheet" href="admin_index_style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
 </head>
 <body class="dashboard-page">
     <div class="container">

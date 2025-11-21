@@ -17,7 +17,7 @@ body {
     line-height: 1.4;
     background: #FFFFFF;
     min-height: 100vh;
-    padding: 50px 10px;
+    padding: 50px 10px; /* 拡大表示のため、上下の余白を多めに確保 */
     overflow-x: hidden;
 }
 
@@ -28,8 +28,8 @@ body {
     border-radius: 8px;
     box-shadow: 0 10px 40px rgba(0,0,0,0.2);
     overflow: hidden;
-    transform: scale(1.25);
-    transform-origin: top center;
+    transform: scale(1.25); /* ★ 125%拡大指定を戻しました */
+    transform-origin: top center; /* ★ 拡大の基点を上端中央に戻しました */
 }
 
 .header {
@@ -206,6 +206,11 @@ body {
     margin-bottom: 4px;
     color: #333;
     font-size: 11px;
+}
+
+/* 生年月日のラベルを赤文字にする */
+label[for="birth_date"] {
+    color: #dc3545;
 }
 
 .form-group input[type="text"],
@@ -479,6 +484,15 @@ input:invalid, select:invalid, textarea:invalid {
 }
 input:invalid:focus, select:invalid:focus, textarea:invalid:focus {
     box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.2);
+}
+
+/* 生年月日の入力欄が空でも赤枠にならないように、デフォルトのスタイルに戻す */
+input#birth_date:invalid {
+    border-color: #ced4da; /* デフォルトの枠線の色 */
+}
+input#birth_date:invalid:focus {
+    border-color: #667eea; /* デフォルトのフォーカス時の枠線の色 */
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1); /* デフォルトのフォーカス時の影 */
 }
 
 /* 必須ラジオボタンの親（.question）のラベルをハイライト (JS制御) */
